@@ -1,6 +1,6 @@
 substitutions:
-  devicename: esp32ppc-idf
-  friendly_name: ESP32PPC-IDF
+  device_name: "esp32ppc-c5-idf"
+  friendly_name: "ESP32ppc-C5-IDF"
 #  wifi_ip: aaa.bbb.ccc.d
 #  wifi_sub: aaa.bbb.ccc.d
 #  wifi_gw: aaa.bbb.ccc.d
@@ -8,39 +8,52 @@ substitutions:
 
 external_components:
   refresh: always
-  source: ./components
+  source:
+    type: git
+    url: https://github.com/TheStigh/ESP32PPC-IDF
+    ref: main
 
 esphome:
-  name: $devicename
+  name: $device_name
 
 esp32:
-  board: wemos_d1_mini32
-  # Example alternatives:
-  #  ESP32-C6: esp32-c6-devkitc-1
-  #  ESP32-C5: esp32-c5-devkitc-1 (if supported by your ESPHome version)
+  variant: ESP32C5
+  board: esp32-c5-devkitc-1
+  flash_size: 8MB
   framework:
     type: esp-idf
+    sdkconfig_options:
+      CONFIG_SOC_WIFI_HE_SUPPORT: y
+      CONFIG_ESP_WIFI_11AX_SUPPORT: y
+      CONFIG_SOC_WIFI_SUPPORT_5G: y
 
 wifi:
-  networks:
-    - ssid: !secret wifi_ssid
-      password: !secret wifi_password
-  use_address: $devicename
-#  fast_connect: True
-#  power_save_mode: light
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
   domain: .local
+  use_address: ${device_name}.local
+  power_save_mode: NONE
+  fast_connect: true
+  enable_on_boot: true
+  reboot_timeout: 10min
+  band_mode: AUTO   # For ESP32-C5 ONLY -> # AUTO | 2.4GHZ | 5GHZ (ESP32-C5 only, requires ESPHome 2026.3+)
+  ap:
+    ssid: "${friendly_name} Fallback"
+    password: !secret ap_password
+    ap_timeout: 120s
 #  manual_ip:
 #    static_ip: ${wifi_ip}
 #    gateway: ${wifi_gw}
 #    subnet: ${wifi_sub}
 #    dns1: ${wifi_dns1}
 
+
 captive_portal:
 
 api:
   encryption:
     key: !secret api_key
-  reboot_timeout: 60min
+  reboot_timeout: 15min
   services:
     - service: recalibrate
       then:
@@ -60,13 +73,15 @@ web_server:
 
 # Enable logging
 logger:
-  level: INFO
+  #level: INFO
+  level: DEBUG
+  baud_rate: 115200
+  hardware_uart: USB_SERIAL_JTAG
 
 # VL53L1X sensor configuration is separate from ESP32PPC people counting algorithm
 vl53l1x:
-  sda: 17     # Use desired PINs for the chosen ESP32
-  scl: 16     # Use desired PINs for the chosen ESP32
-
+  sda: 23
+  scl: 24
   calibration:
     # The ranging mode is different based on how long the distance is that the sensor need to measure.
     # The longer the distance, the more time the sensor needs to take a measurement.
@@ -167,19 +182,22 @@ sensor:
         - text_sensor.template.publish:
             id: uptime_human
             state: !lambda |-
-              int seconds = round(id(uptime_sensor).raw_state);
-              int days = seconds / (24 * 3600);
+              uint32_t seconds = static_cast<uint32_t>(roundf(id(uptime_sensor).raw_state));
+              uint32_t days = seconds / (24 * 3600);
               seconds = seconds % (24 * 3600);
-              int hours = seconds / 3600;
+              uint32_t hours = seconds / 3600;
               seconds = seconds % 3600;
-              int minutes = seconds /  60;
+              uint32_t minutes = seconds / 60;
               seconds = seconds % 60;
-              std::string out;
-              if (days) out += std::to_string(days) + "d ";
-              if (hours) out += std::to_string(hours) + "h ";
-              if (minutes) out += std::to_string(minutes) + "m ";
-              out += std::to_string(seconds) + "s";
-              return out;
+
+              char buffer[32];
+              int len = 0;
+              if (days > 0) len += snprintf(buffer + len, sizeof(buffer) - len, "%ud ", days);
+              if (hours > 0) len += snprintf(buffer + len, sizeof(buffer) - len, "%uh ", hours);
+              if (minutes > 0) len += snprintf(buffer + len, sizeof(buffer) - len, "%um ", minutes);
+              snprintf(buffer + len, sizeof(buffer) - len, "%us", seconds);
+              return std::string(buffer);
+
 
 text_sensor:
   - platform: esp32ppc

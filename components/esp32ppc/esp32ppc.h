@@ -20,7 +20,7 @@ namespace esp32ppc {
 #define NOBODY 0
 #define SOMEONE 1
 #define VERSION "1.6.0"
-static const char *const TAG = "Esp32ppc";
+static const char *const TAG = "ESP32ppc";
 static const char *const SETUP = "Setup";
 static const char *const CALIBRATION = "Sensor Calibration";
 

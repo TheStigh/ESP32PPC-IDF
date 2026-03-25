@@ -17,7 +17,7 @@ void Esp32ppc::dump_config() {
 }
 
 void Esp32ppc::setup() {
-  ESP_LOGI(SETUP, "Booting Esp32ppc %s", VERSION);
+  ESP_LOGI(SETUP, "Booting ESP32ppc %s", VERSION);
   if (version_sensor != nullptr) {
     version_sensor->publish_state(VERSION);
   }
@@ -25,7 +25,7 @@ void Esp32ppc::setup() {
 
   if (this->distanceSensor->is_failed()) {
     this->mark_failed();
-    ESP_LOGE(TAG, "Esp32ppc cannot be setup without a valid VL53L1X sensor");
+    ESP_LOGE(TAG, "ESP32ppc cannot be setup without a valid VL53L1X sensor");
     return;
   }
 
@@ -181,7 +181,7 @@ void Esp32ppc::path_tracking(Zone *zone) {
 
         if ((path_track_[1] == 1) && (path_track_[2] == 3) && (path_track_[3] == 2)) {
           // This an exit
-          ESP_LOGI("Esp32ppc pathTracking", "Exit detected.");
+          ESP_LOGI("ESP32ppc pathTracking", "Exit detected.");
 
           this->updateCounter(-1);
           if (entry_exit_event_sensor != nullptr) {
@@ -189,7 +189,7 @@ void Esp32ppc::path_tracking(Zone *zone) {
           }
         } else if ((path_track_[1] == 2) && (path_track_[2] == 3) && (path_track_[3] == 1)) {
           // This an entry
-          ESP_LOGI("Esp32ppc pathTracking", "Entry detected.");
+          ESP_LOGI("ESP32ppc pathTracking", "Entry detected.");
           this->updateCounter(1);
           if (entry_exit_event_sensor != nullptr) {
             entry_exit_event_sensor->publish_state("Entry");
