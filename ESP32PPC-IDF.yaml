@@ -1,6 +1,6 @@
 substitutions:
-  devicename: esp32ppc
-  friendly_name: ESP32PPC
+  devicename: esp32ppc-idf
+  friendly_name: ESP32PPC-IDF
 #  wifi_ip: aaa.bbb.ccc.d
 #  wifi_sub: aaa.bbb.ccc.d
 #  wifi_gw: aaa.bbb.ccc.d
