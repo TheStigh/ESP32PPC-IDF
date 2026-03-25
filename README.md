@@ -3,7 +3,7 @@
 ## March 25: NOW Support ESP-IDF, including ESP32-C5 !
 
 [![GitHub release](https://img.shields.io/github/v/tag/TheStigh/ESP32PPC-IDF?style=flat-square)](https://GitHub.com/TheStigh/ESP32PPC-IDF/releases/)
-[![Maintenance](https://img.shields.io/maintenance/yes/2026?style=flat-square)](https://GitHub.com/Lyr3x/ESP32ppc/graphs/commit-activity)
+[![Maintenance](https://img.shields.io/maintenance/yes/2026?style=flat-square)](https://GitHub.com/TheStigh/ESP32ppc/graphs/commit-activity)
 
 
 People counter working with any smart home system which supports ESPHome/MQTT like Home Assistant. All necessary entities are created automatically.
@@ -27,7 +27,7 @@ Other than base ESPHome configuration the only config that's needed for ESP32ppc
 
 ```yaml
 external_components:
-  - source: github://Lyr3x/ESP32ppc@master
+  - source: github://TheStigh/ESP32ppc@main
     refresh: always
 vl53l1x:
 esp32ppc:
