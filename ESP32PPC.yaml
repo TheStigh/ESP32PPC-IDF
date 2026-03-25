@@ -1,0 +1,194 @@
+substitutions:
+  devicename: esp32ppc
+  friendly_name: ESP32PPC
+#  wifi_ip: aaa.bbb.ccc.d
+#  wifi_sub: aaa.bbb.ccc.d
+#  wifi_gw: aaa.bbb.ccc.d
+#  wifi_dns1: aaa.bbb.ccc.d
+
+external_components:
+  refresh: always
+  source: ./components
+
+esphome:
+  name: $devicename
+
+esp32:
+  board: wemos_d1_mini32
+  # Example alternatives:
+  #  ESP32-C6: esp32-c6-devkitc-1
+  #  ESP32-C5: esp32-c5-devkitc-1 (if supported by your ESPHome version)
+  framework:
+    type: esp-idf
+
+wifi:
+  networks:
+    - ssid: !secret wifi_ssid
+      password: !secret wifi_password
+  use_address: $devicename
+#  fast_connect: True
+#  power_save_mode: light
+  domain: .local
+#  manual_ip:
+#    static_ip: ${wifi_ip}
+#    gateway: ${wifi_gw}
+#    subnet: ${wifi_sub}
+#    dns1: ${wifi_dns1}
+
+captive_portal:
+
+api:
+  encryption:
+    key: !secret api_key
+  reboot_timeout: 60min
+  services:
+    - service: recalibrate
+      then:
+        - lambda: "id(esp32ppc_platform)->recalibration();"
+
+ota:
+  - platform: esphome
+    id: ota_esphome
+    password: !secret ota_key
+
+web_server:
+  port: 80
+  auth:
+    username: admin
+    #password: !secret web_password
+    password: "12345"
+
+# Enable logging
+logger:
+  level: INFO
+
+# VL53L1X sensor configuration is separate from ESP32PPC people counting algorithm
+vl53l1x:
+  sda: 17     # Use desired PINs for the chosen ESP32
+  scl: 16     # Use desired PINs for the chosen ESP32
+
+  calibration:
+    # The ranging mode is different based on how long the distance is that the sensor need to measure.
+    # The longer the distance, the more time the sensor needs to take a measurement.
+    # Available options are: auto, shortest, short, medium, long, longer, longest
+    ranging: auto
+
+esp32ppc:
+  id: esp32ppc_platform
+  # Smooth out measurements by using the minimum distance from this number of readings
+  sampling: 2
+  # This controls the size of the Region of Interest the sensor should take readings in.
+  roi: { height: 16, width: 6 }
+  # The detection thresholds for determining whether a measurement should count as a person crossing.
+  # A reading must be greater than the minimum and less than the maximum to count as a crossing.
+  # These can be given as absolute distances or as percentages.
+  # Percentages are based on the automatically determined idle or resting distance.
+  detection_thresholds: # defaults for both zones. These also default to 0% & 85% as previously done.
+    # min: 234mm # absolute distance
+    max: 85% # percent based on idle distance
+
+  # Robustness features (v1.6.0+)
+  # Reset state machine if someone enters but turns back without completing crossing
+  path_tracking_timeout: 3s
+  # Continuously adjust thresholds for environmental drift (temperature, lighting)
+  adaptive_threshold:
+    enabled: true
+    update_interval: 60s
+    alpha: 0.05
+
+  # The people counting algorithm works by splitting the sensor's capability reading area into two zones.
+  # This allows for detecting whether a crossing is an entry or exit based on which zones was crossed first.
+  zones:
+    invert: true
+
+button:
+  - platform: restart
+    name: $friendly_name Restart
+    entity_category: config
+  - platform: template
+    name: $friendly_name Recalibrate
+    on_press:
+      - lambda: id(esp32ppc_platform)->recalibration();
+    entity_category: config
+
+number:
+  - platform: esp32ppc
+    people_counter:
+      name: $friendly_name people counter
+      max_value: 100
+
+binary_sensor:
+  - platform: status
+    name: $friendly_name API Status
+  - platform: esp32ppc
+    presence_sensor:
+      name: $friendly_name presence
+
+sensor:
+  - platform: esp32ppc
+    id: esp32ppc_sensors
+    distance_entry:
+      name: $friendly_name distance zone 0
+      filters:
+        - delta: 100
+    distance_exit:
+      name: $friendly_name distance zone 1
+      filters:
+        - delta: 100
+    max_threshold_entry:
+      name: $friendly_name max zone 0
+    max_threshold_exit:
+      name: $friendly_name max zone 1
+    min_threshold_entry:
+      name: $friendly_name min zone 0
+    min_threshold_exit:
+      name: $friendly_name min zone 1
+    roi_height_entry:
+      name: $friendly_name ROI height zone 0
+    roi_width_entry:
+      name: $friendly_name ROI width zone 0
+    roi_height_exit:
+      name: $friendly_name ROI height zone 1
+    roi_width_exit:
+      name: $friendly_name ROI width zone 1
+    sensor_status:
+      name: Sensor Status
+  - platform: wifi_signal
+    name: $friendly_name RSSI
+    update_interval: 60s
+
+  - platform: uptime
+    name: Uptime Sensor
+    id: uptime_sensor
+    update_interval: 60s
+    internal: true
+    on_raw_value:
+      then:
+        - text_sensor.template.publish:
+            id: uptime_human
+            state: !lambda |-
+              int seconds = round(id(uptime_sensor).raw_state);
+              int days = seconds / (24 * 3600);
+              seconds = seconds % (24 * 3600);
+              int hours = seconds / 3600;
+              seconds = seconds % 3600;
+              int minutes = seconds /  60;
+              seconds = seconds % 60;
+              std::string out;
+              if (days) out += std::to_string(days) + "d ";
+              if (hours) out += std::to_string(hours) + "h ";
+              if (minutes) out += std::to_string(minutes) + "m ";
+              out += std::to_string(seconds) + "s";
+              return out;
+
+text_sensor:
+  - platform: esp32ppc
+    version:
+      name: $friendly_name version
+  - platform: esp32ppc
+    entry_exit_event:
+      name: $friendly_name last direction
+  - platform: template
+    name: $friendly_name Uptime Human Readable
+    id: uptime_human
+    icon: mdi:clock-start
