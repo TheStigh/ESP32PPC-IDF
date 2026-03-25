@@ -1,12 +1,6 @@
 
 #include "VL53L1X_ULD.h"
 #include "esphome/core/hal.h"
-// ESPHome currently compiles only a subset of this component's .cpp files.
-// Include the ULD implementation units here to ensure all symbols are linked.
-#include "VL53L1X_api.cpp"
-#include "VL53L1X_calibration.cpp"
-#include "vl53l1_platform.cpp"
-#include "VL53L1X_i2ccoms.cpp"
 
 /**
  * @brief This function instantiates the class object
