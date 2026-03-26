@@ -59,6 +59,11 @@ api:
       then:
         - lambda: "id(esp32ppc_platform)->recalibration();"
 
+# Needed for daily reset of entry/exit totals at local midnight
+time:
+  - platform: homeassistant
+    id: ha_time
+
 ota:
   - platform: esphome
     id: ota_esphome
@@ -90,6 +95,7 @@ vl53l1x:
 
 esp32ppc:
   id: esp32ppc_platform
+  time_id: ha_time
   # Smooth out measurements by using the minimum distance from this number of readings
   sampling: 2
   # This controls the size of the Region of Interest the sensor should take readings in.
@@ -126,10 +132,17 @@ button:
       - lambda: id(esp32ppc_platform)->recalibration();
     entity_category: config
 
+switch:
+  - platform: esp32ppc
+    esp32ppc_id: esp32ppc_platform
+    clamped:
+      name: $friendly_name counter clamped
+
 number:
   - platform: esp32ppc
     people_counter:
       name: $friendly_name people counter
+      min_value: -128
       max_value: 100
 
 binary_sensor:
@@ -168,6 +181,10 @@ sensor:
       name: $friendly_name ROI width zone 1
     sensor_status:
       name: Sensor Status
+    total_entry_today:
+      name: $friendly_name Total Entry Today
+    total_exit_today:
+      name: $friendly_name Total Exit Today
   - platform: wifi_signal
     name: $friendly_name RSSI
     update_interval: 60s

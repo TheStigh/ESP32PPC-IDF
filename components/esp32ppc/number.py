@@ -2,7 +2,7 @@ from typing import OrderedDict
 
 import esphome.codegen as cg
 import esphome.config_validation as cv
-from esphome.const import CONF_ICON, CONF_MAX_VALUE
+from esphome.const import CONF_ICON, CONF_MAX_VALUE, CONF_MIN_VALUE
 from esphome.cpp_generator import MockObj
 
 from ..persisted_number import PERSISTED_NUMBER_SCHEMA, new_persisted_number
@@ -18,8 +18,9 @@ CONFIG_SCHEMA = cv.Schema(
         cv.GenerateID(CONF_ESP32PPC_ID): cv.use_id(Esp32ppc),
         cv.Optional(CONF_PEOPLE_COUNTER): PERSISTED_NUMBER_SCHEMA.extend(
             {
-                cv.Optional(CONF_ICON, default="mdi:counter"): cv.icon,  # new default
-                cv.Optional(CONF_MAX_VALUE, 10): cv.int_range(-128, 128),
+                cv.Optional(CONF_ICON, default="mdi:counter"): cv.icon,
+                cv.Optional(CONF_MIN_VALUE, default=-128): cv.int_range(-128, 128),
+                cv.Optional(CONF_MAX_VALUE, default=10): cv.int_range(-128, 128),
             }
         ),
     }
@@ -28,7 +29,10 @@ CONFIG_SCHEMA = cv.Schema(
 
 async def setup_people_counter(config: OrderedDict, hub: MockObj):
     counter = await new_persisted_number(
-        config, min_value=0, step=1, max_value=config[CONF_MAX_VALUE]
+        config,
+        min_value=config[CONF_MIN_VALUE],
+        step=1,
+        max_value=config[CONF_MAX_VALUE],
     )
     cg.add(hub.set_people_counter(counter))
 

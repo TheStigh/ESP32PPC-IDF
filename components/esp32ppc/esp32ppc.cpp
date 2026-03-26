@@ -2,6 +2,23 @@
 
 namespace esphome {
 namespace esp32ppc {
+
+void CounterClampSwitch::write_state(bool state) {
+  this->parent_->set_clamped_mode(state);
+  this->publish_state(state);
+}
+
+void Esp32ppc::set_clamped_mode(bool clamped_mode) {
+  clamped_mode_ = clamped_mode;
+
+  if (clamped_mode_ && this->people_counter != nullptr && this->people_counter->has_state() &&
+      this->people_counter->state < 0.0f) {
+    auto call = this->people_counter->make_call();
+    call.set_value(0.0f);
+    call.perform();
+  }
+}
+
 void Esp32ppc::dump_config() {
   ESP_LOGCONFIG(TAG, "Esp32ppc:");
   ESP_LOGCONFIG(TAG, "  Sample size: %d", samples);
@@ -11,6 +28,7 @@ void Esp32ppc::dump_config() {
     ESP_LOGCONFIG(TAG, "    Update interval: %lu ms", adaptive_threshold_interval_ms_);
     ESP_LOGCONFIG(TAG, "    Smoothing alpha: %.2f", adaptive_threshold_alpha_);
   }
+  ESP_LOGCONFIG(TAG, "  Counter clamped: %s", clamped_mode_ ? "ON" : "OFF");
   LOG_UPDATE_INTERVAL(this);
   entry->dump_config();
   exit->dump_config();
@@ -42,6 +60,11 @@ void Esp32ppc::setup() {
              adaptive_threshold_interval_ms_, adaptive_threshold_alpha_);
   }
   ESP_LOGI(SETUP, "Path tracking timeout: %lu ms", path_tracking_timeout_ms_);
+
+  if (clamped_switch_ != nullptr) {
+    clamped_switch_->publish_state(clamped_mode_);
+  }
+  publish_daily_totals_();
 }
 
 void Esp32ppc::update() {
@@ -54,6 +77,8 @@ void Esp32ppc::update() {
 }
 
 void Esp32ppc::loop() {
+  maybe_reset_daily_totals_();
+
   this->current_zone->readDistance(distanceSensor);
   path_tracking(this->current_zone);
   handle_sensor_status();
@@ -183,6 +208,8 @@ void Esp32ppc::path_tracking(Zone *zone) {
           // This an exit
           ESP_LOGI("ESP32ppc pathTracking", "Exit detected.");
 
+          total_exit_today_++;
+          publish_daily_totals_();
           this->updateCounter(-1);
           if (entry_exit_event_sensor != nullptr) {
             entry_exit_event_sensor->publish_state("Exit");
@@ -190,6 +217,9 @@ void Esp32ppc::path_tracking(Zone *zone) {
         } else if ((path_track_[1] == 2) && (path_track_[2] == 3) && (path_track_[3] == 1)) {
           // This an entry
           ESP_LOGI("ESP32ppc pathTracking", "Entry detected.");
+
+          total_entry_today_++;
+          publish_daily_totals_();
           this->updateCounter(1);
           if (entry_exit_event_sensor != nullptr) {
             entry_exit_event_sensor->publish_state("Entry");
@@ -221,16 +251,60 @@ void Esp32ppc::path_tracking(Zone *zone) {
     }
   }
 }
+
 void Esp32ppc::updateCounter(int delta) {
-  if (this->people_counter == nullptr) {
+  if (this->people_counter == nullptr || !this->people_counter->has_state()) {
     return;
   }
-  auto next = this->people_counter->state + (float) delta;
+
+  auto next = this->people_counter->state + static_cast<float>(delta);
+  if (clamped_mode_ && next < 0.0f) {
+    next = 0.0f;
+  }
+
   ESP_LOGI(TAG, "Updating people count: %d", (int) next);
   auto call = this->people_counter->make_call();
   call.set_value(next);
   call.perform();
 }
+
+void Esp32ppc::publish_daily_totals_() {
+  if (total_entry_today_sensor != nullptr) {
+    total_entry_today_sensor->publish_state(total_entry_today_);
+  }
+  if (total_exit_today_sensor != nullptr) {
+    total_exit_today_sensor->publish_state(total_exit_today_);
+  }
+}
+
+void Esp32ppc::maybe_reset_daily_totals_() {
+  if (time_ == nullptr) {
+    if (!warned_missing_time_ && (total_entry_today_sensor != nullptr || total_exit_today_sensor != nullptr)) {
+      ESP_LOGW(TAG, "No time source configured; daily totals reset on reboot only.");
+      warned_missing_time_ = true;
+    }
+    return;
+  }
+
+  auto now = time_->now();
+  if (!now.is_valid()) {
+    return;
+  }
+
+  if (last_reset_day_of_year_ < 0) {
+    last_reset_day_of_year_ = now.day_of_year;
+    return;
+  }
+
+  if (now.day_of_year != last_reset_day_of_year_) {
+    last_reset_day_of_year_ = now.day_of_year;
+    total_entry_today_ = 0;
+    total_exit_today_ = 0;
+    publish_daily_totals_();
+    ESP_LOGI(TAG, "Daily entry/exit totals reset for a new day");
+  }
+}
+
 void Esp32ppc::recalibration() { calibrate_zones(); }
 
 void Esp32ppc::updateAdaptiveThresholds() {
@@ -367,3 +441,4 @@ void Esp32ppc::publish_sensor_configuration(Zone *entry, Zone *exit, bool isMax)
 }
 }  // namespace esp32ppc
 }  // namespace esphome
+

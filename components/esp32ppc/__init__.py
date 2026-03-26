@@ -1,17 +1,19 @@
 from typing import Dict, Union
 import esphome.codegen as cg
 import esphome.config_validation as cv
+from esphome.components import time
 from esphome.const import (
     CONF_HEIGHT,
     CONF_ID,
     CONF_INVERT,
     CONF_SENSOR,
+    CONF_TIME_ID,
     CONF_WIDTH,
 )
 from ..vl53l1x import distance_as_mm, NullableSchema, VL53L1X
 
 DEPENDENCIES = ["vl53l1x"]
-AUTO_LOAD = ["vl53l1x", "sensor", "binary_sensor", "text_sensor", "number"]
+AUTO_LOAD = ["vl53l1x", "sensor", "binary_sensor", "text_sensor", "number", "switch"]
 MULTI_CONF = True
 
 CONF_ESP32PPC_ID = "esp32ppc_id"
@@ -86,6 +88,7 @@ CONFIG_SCHEMA = cv.Schema(
     {
         cv.GenerateID(): cv.declare_id(Esp32ppc),
         cv.GenerateID(CONF_SENSOR): cv.use_id(VL53L1X),
+        cv.Optional(CONF_TIME_ID): cv.use_id(time.RealTimeClock),
         cv.Optional(CONF_ORIENTATION, default="parallel"): cv.enum(ORIENTATION_VALUES),
         cv.Optional(CONF_SAMPLING, default=2): cv.All(cv.uint8_t, cv.Range(min=1)),
         cv.Optional(CONF_ROI, default={}): ROI_SCHEMA,
@@ -112,6 +115,10 @@ async def to_code(config: Dict):
 
     sens = await cg.get_variable(config[CONF_SENSOR])
     cg.add(esp32ppc.set_tof_sensor(sens))
+
+    if CONF_TIME_ID in config:
+        time_comp = await cg.get_variable(config[CONF_TIME_ID])
+        cg.add(esp32ppc.set_time(time_comp))
 
     cg.add(esp32ppc.set_orientation(config[CONF_ORIENTATION]))
     cg.add(esp32ppc.set_sampling_size(config[CONF_SAMPLING]))

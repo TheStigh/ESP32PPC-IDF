@@ -3,7 +3,9 @@
 
 #include "esphome/components/binary_sensor/binary_sensor.h"
 #include "esphome/components/sensor/sensor.h"
+#include "esphome/components/switch/switch.h"
 #include "esphome/components/text_sensor/text_sensor.h"
+#include "esphome/components/time/real_time_clock.h"
 #include "esphome/core/application.h"
 #include "esphome/core/component.h"
 #include "esphome/core/hal.h"
@@ -53,6 +55,17 @@ static int time_budget_in_ms_medium_long = 50;
 static int time_budget_in_ms_long = 100;
 static int time_budget_in_ms_max = 200;  // max range: 4m
 
+class Esp32ppc;
+
+class CounterClampSwitch : public switch_::Switch {
+ public:
+  explicit CounterClampSwitch(Esp32ppc *parent) : parent_(parent) {}
+
+ protected:
+  void write_state(bool state) override;
+  Esp32ppc *parent_;
+};
+
 class Esp32ppc : public PollingComponent {
  public:
   void setup() override;
@@ -98,6 +111,16 @@ class Esp32ppc : public PollingComponent {
   void set_entry_exit_event_text_sensor(text_sensor::TextSensor *entry_exit_event_sensor_) {
     entry_exit_event_sensor = entry_exit_event_sensor_;
   }
+  void set_total_entry_today_sensor(sensor::Sensor *total_entry_today_sensor_) {
+    total_entry_today_sensor = total_entry_today_sensor_;
+  }
+  void set_total_exit_today_sensor(sensor::Sensor *total_exit_today_sensor_) {
+    total_exit_today_sensor = total_exit_today_sensor_;
+  }
+  void set_time(time::RealTimeClock *time_comp) { time_ = time_comp; }
+  void set_clamped_switch(CounterClampSwitch *clamped_switch) { clamped_switch_ = clamped_switch; }
+  void set_clamped_mode(bool clamped_mode);
+  bool get_clamped_mode() const { return clamped_mode_; }
   void recalibration();
   Zone *entry = new Zone(0);
   Zone *exit = new Zone(1);
@@ -126,6 +149,10 @@ class Esp32ppc : public PollingComponent {
   binary_sensor::BinarySensor *presence_sensor;
   text_sensor::TextSensor *version_sensor;
   text_sensor::TextSensor *entry_exit_event_sensor;
+  sensor::Sensor *total_entry_today_sensor{nullptr};
+  sensor::Sensor *total_exit_today_sensor{nullptr};
+  time::RealTimeClock *time_{nullptr};
+  CounterClampSwitch *clamped_switch_{nullptr};
 
   VL53L1_Error last_sensor_status = VL53L1_ERROR_NONE;
   VL53L1_Error sensor_status = VL53L1_ERROR_NONE;
@@ -165,9 +192,18 @@ class Esp32ppc : public PollingComponent {
   uint32_t zones_empty_since_ = 0;
   bool zones_were_occupied_ = false;
 
+  bool clamped_mode_{false};
+  uint32_t total_entry_today_{0};
+  uint32_t total_exit_today_{0};
+  int last_reset_day_of_year_{-1};
+  bool warned_missing_time_{false};
+
   void resetPathTracking();
   void updateAdaptiveThresholds();
+  void maybe_reset_daily_totals_();
+  void publish_daily_totals_();
 };
 
 }  // namespace esp32ppc
 }  // namespace esphome
+

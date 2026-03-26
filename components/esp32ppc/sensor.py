@@ -2,11 +2,8 @@ import esphome.codegen as cg
 import esphome.config_validation as cv
 from esphome.components import sensor
 from esphome.const import (
-    ICON_ARROW_EXPAND_VERTICAL,
-    ICON_NEW_BOX,
     ICON_RULER,
     STATE_CLASS_MEASUREMENT,
-    UNIT_EMPTY,
     ENTITY_CATEGORY_DIAGNOSTIC,
 )
 from . import Esp32ppc, CONF_ESP32PPC_ID
@@ -23,6 +20,8 @@ CONF_ROI_HEIGHT_entry = "roi_height_entry"
 CONF_ROI_WIDTH_entry = "roi_width_entry"
 CONF_ROI_HEIGHT_exit = "roi_height_exit"
 CONF_ROI_WIDTH_exit = "roi_width_exit"
+CONF_TOTAL_ENTRY_TODAY = "total_entry_today"
+CONF_TOTAL_EXIT_TODAY = "total_exit_today"
 SENSOR_STATUS = "sensor_status"
 
 CONFIG_SCHEMA = sensor.sensor_schema().extend(
@@ -97,6 +96,16 @@ CONFIG_SCHEMA = sensor.sensor_schema().extend(
             state_class=STATE_CLASS_MEASUREMENT,
             entity_category=ENTITY_CATEGORY_DIAGNOSTIC,
         ),
+        cv.Optional(CONF_TOTAL_ENTRY_TODAY): sensor.sensor_schema(
+            icon="mdi:location-enter",
+            accuracy_decimals=0,
+            state_class=STATE_CLASS_MEASUREMENT,
+        ),
+        cv.Optional(CONF_TOTAL_EXIT_TODAY): sensor.sensor_schema(
+            icon="mdi:location-exit",
+            accuracy_decimals=0,
+            state_class=STATE_CLASS_MEASUREMENT,
+        ),
         cv.Optional(SENSOR_STATUS): sensor.sensor_schema(
             icon="mdi:check-circle",
             accuracy_decimals=0,
@@ -139,6 +148,12 @@ async def to_code(config):
     if CONF_ROI_WIDTH_exit in config:
         count = await sensor.new_sensor(config[CONF_ROI_WIDTH_exit])
         cg.add(var.set_exit_roi_width_sensor(count))
+    if CONF_TOTAL_ENTRY_TODAY in config:
+        count = await sensor.new_sensor(config[CONF_TOTAL_ENTRY_TODAY])
+        cg.add(var.set_total_entry_today_sensor(count))
+    if CONF_TOTAL_EXIT_TODAY in config:
+        count = await sensor.new_sensor(config[CONF_TOTAL_EXIT_TODAY])
+        cg.add(var.set_total_exit_today_sensor(count))
     if SENSOR_STATUS in config:
         count = await sensor.new_sensor(config[SENSOR_STATUS])
         cg.add(var.set_sensor_status_sensor(count))
