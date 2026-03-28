@@ -16,7 +16,7 @@ class Zone {
 
   void reset_roi(uint8_t default_center);
   void roi_calibration(uint16_t entry_idle, uint16_t exit_idle, Orientation orientation);
-  bool calibrate_threshold(Vl53l1xDevice &sensor, int number_attempts);
+  void calibrate_threshold(Vl53l1xDevice &sensor, int number_attempts);
 
   bool read_distance(Vl53l1xDevice &sensor, VL53L1_Error &status_out);
   void update_adaptive_threshold(float alpha);
@@ -27,7 +27,7 @@ class Zone {
   uint8_t id() const { return id_; }
 
   Roi roi{};
-  Roi roi_override{0, 0, 0};
+  Roi roi_override{};
   Threshold threshold{};
 
  private:
@@ -41,5 +41,3 @@ class Zone {
 };
 
 }  // namespace ppc
-
-

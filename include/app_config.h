@@ -5,30 +5,25 @@
 namespace cfg {
 
 // Device identity and topic path: ppc/v1/c/{customer_id}/d/{device_id}
-static constexpr char kDeviceId[] = "";
+static constexpr char kDeviceId[] = "esp32ppc-c5-01";
 static constexpr char kCustomerId[] = "customer-demo";
 
 // Wi-Fi
-static constexpr char kWifiSsid[] = "";
-static constexpr char kWifiPassword[] = "";
+static constexpr char kWifiSsid[] = "YOUR_WIFI_SSID";
+static constexpr char kWifiPassword[] = "YOUR_WIFI_PASSWORD";
 
 // MQTT broker
-static constexpr char kMqttHost[] = "";
+static constexpr char kMqttHost[] = "192.168.1.10";
 static constexpr uint16_t kMqttPortPlain = 1883;
 static constexpr uint16_t kMqttPortTls = 8883;
 static constexpr bool kMqttUseTls = true;
-static constexpr char kMqttUsername[] = "";
-static constexpr char kMqttPassword[] = "";
+static constexpr char kMqttUsername[] = "device_user";
+static constexpr char kMqttPassword[] = "device_password";
 
 // Optional TLS assets. Leave empty to use insecure TLS (testing only).
 static constexpr char kMqttCaCert[] = "";
 static constexpr char kMqttClientCert[] = "";
 static constexpr char kMqttClientKey[] = "";
-
-// Provisioning AP (used when WiFi/MQTT config is missing in NVS)
-static constexpr char kProvisionApSsidPrefix[] = "ESP32PPC-Setup";
-// Must be empty (open AP) or at least 8 characters
-static constexpr char kProvisionApPassword[] = "ppcsetup";
 
 // Sensor bus and timing
 static constexpr uint8_t kI2cSdaPin = 23;
@@ -43,23 +38,15 @@ static constexpr uint8_t kSamplingSize = 2;
 static constexpr uint8_t kThresholdMinPercent = 0;
 static constexpr uint8_t kThresholdMaxPercent = 85;
 static constexpr uint32_t kPathTrackingTimeoutMs = 3000;
-static constexpr uint32_t kEventCooldownMs = 700;
-static constexpr uint32_t kPeakTimeDeltaMs = 120;
 static constexpr bool kAdaptiveThresholdEnabled = true;
 static constexpr uint32_t kAdaptiveThresholdIntervalMs = 60000;
 static constexpr float kAdaptiveThresholdAlpha = 0.05f;
 static constexpr bool kClampCounterAtZero = true;
-static constexpr bool kDoorProtectionEnabled = false;
-static constexpr uint16_t kDoorProtectionDistanceMm = 100;
 
 // Publish intervals
 static constexpr uint32_t kSensorLoopIntervalMs = 40;
 static constexpr uint32_t kStatePublishIntervalMs = 1000;
 static constexpr uint32_t kWifiRssiPublishIntervalMs = 10000;
-
-// Serial diagnostics
-static constexpr bool kSerialDebugEnabled = false;
-static constexpr uint32_t kSerialDebugSampleIntervalMs = 200;
 
 // Time sync for daily totals reset
 static constexpr char kNtpServer1[] = "pool.ntp.org";
@@ -68,7 +55,4 @@ static constexpr long kGmtOffsetSec = 3600;  // Europe/Oslo winter offset
 static constexpr int kDstOffsetSec = 3600;
 
 }  // namespace cfg
-
-
-
 

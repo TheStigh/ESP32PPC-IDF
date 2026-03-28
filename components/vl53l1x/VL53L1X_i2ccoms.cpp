@@ -177,9 +177,7 @@ int8_t i2c_read_multi(uint8_t deviceAddress, uint16_t registerAddress, uint8_t *
     return VL53L1_ERROR_CONTROL_INTERFACE;
   }
 
-  // On ESP32-C5 (I2C NG), repeated-start can return ESP_ERR_INVALID_STATE.
-  // Use a STOP here, then a separate read transaction.
-  if (Wire.endTransmission(true) != 0) {
+  if (Wire.endTransmission(false) != 0) {
     return VL53L1_ERROR_CONTROL_INTERFACE;
   }
 

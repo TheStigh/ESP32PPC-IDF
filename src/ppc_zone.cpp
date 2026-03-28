@@ -51,7 +51,7 @@ void Zone::reset_roi(uint8_t default_center) {
                 roi.center);
 }
 
-bool Zone::calibrate_threshold(Vl53l1xDevice &sensor, int number_attempts) {
+void Zone::calibrate_threshold(Vl53l1xDevice &sensor, int number_attempts) {
   std::vector<int> values;
   values.reserve(number_attempts);
   int sum = 0;
@@ -66,35 +66,16 @@ bool Zone::calibrate_threshold(Vl53l1xDevice &sensor, int number_attempts) {
     delay(2);
   }
 
-  if (values.size() < 3) {
-    Serial.printf("[Zone] %s threshold calibration failed: only %u valid samples\n",
-                  id_ == 0 ? "Entry" : "Exit",
-                  static_cast<unsigned>(values.size()));
-    return false;
+  if (values.empty()) {
+    return;
   }
 
   threshold.idle = static_cast<uint16_t>(get_optimized_value(values, sum));
   threshold.max = static_cast<uint16_t>((static_cast<uint32_t>(threshold.idle) * threshold.max_percent) / 100U);
   threshold.min = static_cast<uint16_t>((static_cast<uint32_t>(threshold.idle) * threshold.min_percent) / 100U);
 
-  Serial.printf("[Zone] %s threshold idle=%u min=%u(%u%%) max=%u(%u%%)\n",
-                id_ == 0 ? "Entry" : "Exit",
-                threshold.idle,
-                threshold.min,
-                threshold.min_percent,
-                threshold.max,
-                threshold.max_percent);
-
-  if (threshold.idle == 0 || threshold.max <= threshold.min) {
-    Serial.printf("[Zone] %s threshold calibration invalid: idle=%u min=%u max=%u\n",
-                  id_ == 0 ? "Entry" : "Exit",
-                  threshold.idle,
-                  threshold.min,
-                  threshold.max);
-    return false;
-  }
-
-  return true;
+  Serial.printf("[Zone] %s threshold idle=%u min=%u(%u%%) max=%u(%u%%)\n", id_ == 0 ? "Entry" : "Exit",
+                threshold.idle, threshold.min, threshold.min_percent, threshold.max, threshold.max_percent);
 }
 
 void Zone::roi_calibration(uint16_t entry_idle, uint16_t exit_idle, Orientation orientation) {
