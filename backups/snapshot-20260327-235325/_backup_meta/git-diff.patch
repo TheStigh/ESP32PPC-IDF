@@ -1,0 +1,970 @@
+﻿diff --git a/components/vl53l1x/VL53L1X_i2ccoms.cpp b/components/vl53l1x/VL53L1X_i2ccoms.cpp
+index ec9325e..cdfb582 100644
+--- a/components/vl53l1x/VL53L1X_i2ccoms.cpp
++++ b/components/vl53l1x/VL53L1X_i2ccoms.cpp
+@@ -177,7 +177,9 @@ int8_t i2c_read_multi(uint8_t deviceAddress, uint16_t registerAddress, uint8_t *
+     return VL53L1_ERROR_CONTROL_INTERFACE;
+   }
+ 
+-  if (Wire.endTransmission(false) != 0) {
++  // On ESP32-C5 (I2C NG), repeated-start can return ESP_ERR_INVALID_STATE.
++  // Use a STOP here, then a separate read transaction.
++  if (Wire.endTransmission(true) != 0) {
+     return VL53L1_ERROR_CONTROL_INTERFACE;
+   }
+ 
+diff --git a/docs/standalone-mqtt-contract.md b/docs/standalone-mqtt-contract.md
+index b208dc0..bfaca9e 100644
+--- a/docs/standalone-mqtt-contract.md
++++ b/docs/standalone-mqtt-contract.md
+@@ -21,9 +21,25 @@ This firmware publishes and subscribes under:
+   `{ "request_id": "abc", "cmd": "set_people_counter", "value": 4 }`
+ - Set clamp mode:
+   `{ "request_id": "abc", "cmd": "set_clamped", "value": true }`
++- Get runtime config (response is in `{base}/state.config`):
++  `{ "request_id": "abc", "cmd": "get_config" }`
++- Set runtime config (ESPHome-like tuning fields):
++  `{ "request_id": "abc", "cmd": "set_config", "config": { "sampling": 2, "threshold_min_percent": 0, "threshold_max_percent": 85, "invert_direction": true, "path_tracking_timeout_ms": 3000, "event_cooldown_ms": 700, "peak_time_delta_ms": 120, "adaptive": { "enabled": true, "interval_ms": 60000, "alpha": 0.05 }, "debug_serial": true, "debug_interval_ms": 200 } }`
+ - Restart:
+   `{ "request_id": "abc", "cmd": "restart" }`
+ 
++## Runtime config notes
++
++- `sampling`: `1..16`
++- `threshold_min_percent`: `0..100`
++- `threshold_max_percent`: `0..100` and must be greater than min
++- `path_tracking_timeout_ms`: `0..60000` (`0` disables timeout)
++- `event_cooldown_ms`: `0..10000` (anti-double-count guard)
++- `peak_time_delta_ms`: `0..2000` (fallback direction detector for overlap-heavy crossings)
++- `adaptive.interval_ms`: `1000..3600000`
++- `adaptive.alpha`: `(0.0, 1.0]`
++- `debug_serial`: enables detailed serial traces (`[PPC][DBG]`, `[PPC][TRACE]`, `[PPC][EVENT]`)
++
+ ## ACL recommendation
+ 
+ Use the `customer_id` segment as hard isolation boundary.
+@@ -41,3 +57,4 @@ Never grant wildcard read across customers.
+ - TLS: port 8883
+ - Firmware supports CA pinning and optional client certificate/key.
+ - If CA is empty, firmware can use insecure TLS for testing only.
++
+diff --git a/include/app_config.h b/include/app_config.h
+index 99f7627..89affac 100644
+--- a/include/app_config.h
++++ b/include/app_config.h
+@@ -9,16 +9,16 @@ static constexpr char kDeviceId[] = "esp32ppc-c5-01";
+ static constexpr char kCustomerId[] = "customer-demo";
+ 
+ // Wi-Fi
+-static constexpr char kWifiSsid[] = "YOUR_WIFI_SSID";
+-static constexpr char kWifiPassword[] = "YOUR_WIFI_PASSWORD";
++static constexpr char kWifiSsid[] = "TheStighMesh";
++static constexpr char kWifiPassword[] = "AarsteinN3T99#";
+ 
+ // MQTT broker
+-static constexpr char kMqttHost[] = "192.168.1.10";
++static constexpr char kMqttHost[] = "192.168.11.200";
+ static constexpr uint16_t kMqttPortPlain = 1883;
+ static constexpr uint16_t kMqttPortTls = 8883;
+-static constexpr bool kMqttUseTls = true;
+-static constexpr char kMqttUsername[] = "device_user";
+-static constexpr char kMqttPassword[] = "device_password";
++static constexpr bool kMqttUseTls = false;
++static constexpr char kMqttUsername[] = "mqtt_thestigh";
++static constexpr char kMqttPassword[] = "90Hester!";
+ 
+ // Optional TLS assets. Leave empty to use insecure TLS (testing only).
+ static constexpr char kMqttCaCert[] = "";
+@@ -38,6 +38,8 @@ static constexpr uint8_t kSamplingSize = 2;
+ static constexpr uint8_t kThresholdMinPercent = 0;
+ static constexpr uint8_t kThresholdMaxPercent = 85;
+ static constexpr uint32_t kPathTrackingTimeoutMs = 3000;
++static constexpr uint32_t kEventCooldownMs = 700;
++static constexpr uint32_t kPeakTimeDeltaMs = 120;
+ static constexpr bool kAdaptiveThresholdEnabled = true;
+ static constexpr uint32_t kAdaptiveThresholdIntervalMs = 60000;
+ static constexpr float kAdaptiveThresholdAlpha = 0.05f;
+@@ -48,6 +50,10 @@ static constexpr uint32_t kSensorLoopIntervalMs = 40;
+ static constexpr uint32_t kStatePublishIntervalMs = 1000;
+ static constexpr uint32_t kWifiRssiPublishIntervalMs = 10000;
+ 
++// Serial diagnostics
++static constexpr bool kSerialDebugEnabled = false;
++static constexpr uint32_t kSerialDebugSampleIntervalMs = 200;
++
+ // Time sync for daily totals reset
+ static constexpr char kNtpServer1[] = "pool.ntp.org";
+ static constexpr char kNtpServer2[] = "time.nist.gov";
+diff --git a/platformio.ini b/platformio.ini
+index 2a771bc..d1d03f8 100644
+--- a/platformio.ini
++++ b/platformio.ini
+@@ -1,12 +1,11 @@
+ [platformio]
+-default_envs = esp32-c5-devkitc-1
++default_envs = seeed-xiao-esp32-c5
+ 
+-[env:esp32-c5-devkitc-1]
+-platform = espressif32
+-board = esp32-c5-devkitc-1
++[env:seeed-xiao-esp32-c5]
++platform = https://github.com/Seeed-Studio/platform-seeedboards.git
++board = seeed-xiao-esp32-c5
+ framework = arduino
+ monitor_speed = 115200
+-build_unflags = -std=gnu++11
+ build_flags =
+   -std=gnu++17
+   -DUSE_ARDUINO
+diff --git a/src/main.cpp b/src/main.cpp
+index d9e0b52..b72085a 100644
+--- a/src/main.cpp
++++ b/src/main.cpp
+@@ -19,6 +19,36 @@ constexpr uint8_t kNobody = 0;
+ constexpr uint8_t kSomeone = 1;
+ constexpr char kFwVersion[] = "standalone-0.1.0";
+ 
++struct RuntimeConfig {
++  bool invert_direction;
++  uint8_t sampling_size;
++  uint8_t threshold_min_percent;
++  uint8_t threshold_max_percent;
++  uint32_t path_tracking_timeout_ms;
++  uint32_t event_cooldown_ms;
++  uint32_t peak_time_delta_ms;
++  bool adaptive_threshold_enabled;
++  uint32_t adaptive_threshold_interval_ms;
++  float adaptive_threshold_alpha;
++  bool serial_debug_enabled;
++  uint32_t serial_debug_sample_interval_ms;
++};
++
++RuntimeConfig runtime_cfg{
++    cfg::kInvertDirection,
++    cfg::kSamplingSize,
++    cfg::kThresholdMinPercent,
++    cfg::kThresholdMaxPercent,
++    cfg::kPathTrackingTimeoutMs,
++    cfg::kEventCooldownMs,
++    cfg::kPeakTimeDeltaMs,
++    cfg::kAdaptiveThresholdEnabled,
++    cfg::kAdaptiveThresholdIntervalMs,
++    cfg::kAdaptiveThresholdAlpha,
++    cfg::kSerialDebugEnabled,
++    cfg::kSerialDebugSampleIntervalMs,
++};
++
+ WiFiClient plain_client;
+ WiFiClientSecure tls_client;
+ PubSubClient mqtt_client(plain_client);
+@@ -42,13 +72,34 @@ struct PendingEvent {
+   String name{};
+ };
+ 
++bool parse_uint32(JsonVariantConst value, uint32_t &out) {
++  if (value.is<uint32_t>()) {
++    out = value.as<uint32_t>();
++    return true;
++  }
++  if (value.is<int>()) {
++    int v = value.as<int>();
++    if (v < 0) {
++      return false;
++    }
++    out = static_cast<uint32_t>(v);
++    return true;
++  }
++  return false;
++}
++
++bool parse_float(JsonVariantConst value, float &out) {
++  if (value.is<float>() || value.is<double>() || value.is<int>()) {
++    out = value.as<float>();
++    return true;
++  }
++  return false;
++}
++
+ class CounterEngine {
+  public:
+   bool begin() {
+-    entry_.set_max_samples(cfg::kSamplingSize);
+-    exit_.set_max_samples(cfg::kSamplingSize);
+-    entry_.set_threshold_percentages(cfg::kThresholdMinPercent, cfg::kThresholdMaxPercent);
+-    exit_.set_threshold_percentages(cfg::kThresholdMinPercent, cfg::kThresholdMaxPercent);
++    apply_runtime_config();
+ 
+     if (!sensor_.begin(cfg::kI2cSdaPin,
+                        cfg::kI2cSclPin,
+@@ -67,6 +118,7 @@ class CounterEngine {
+     }
+ 
+     const uint32_t now = millis();
++    reset_path_tracking();
+     last_state_change_time_ = now;
+     last_adaptive_update_time_ = now;
+     zones_empty_since_ = now;
+@@ -78,20 +130,25 @@ class CounterEngine {
+   bool loop_once() {
+     maybe_reset_daily_totals();
+ 
+-    VL53L1_Error status = VL53L1_ERROR_NONE;
+-    if (!current_zone_->read_distance(sensor_, status)) {
+-      sensor_status_ = status;
++    VL53L1_Error status_entry = VL53L1_ERROR_NONE;
++    VL53L1_Error status_exit = VL53L1_ERROR_NONE;
++    if (!entry_.read_distance(sensor_, status_entry)) {
++      sensor_status_ = status_entry;
++      return false;
++    }
++    if (!exit_.read_distance(sensor_, status_exit)) {
++      sensor_status_ = status_exit;
+       return false;
+     }
+ 
+-    sensor_status_ = status;
+-    path_tracking(*current_zone_);
++    sensor_status_ = (status_entry != VL53L1_ERROR_NONE) ? status_entry : status_exit;
++    path_tracking();
+ 
+-    if (cfg::kAdaptiveThresholdEnabled) {
++    if (runtime_cfg.adaptive_threshold_enabled) {
+       update_adaptive_thresholds();
+     }
+ 
+-    current_zone_ = (current_zone_ == &entry_) ? &exit_ : &entry_;
++    maybe_log_debug_sample(millis());
+     return true;
+   }
+ 
+@@ -111,9 +168,14 @@ class CounterEngine {
+     }
+ 
+     entry_.roi_calibration(entry_.threshold.idle, exit_.threshold.idle, orientation_);
+-    entry_.calibrate_threshold(sensor_, 20);
++    if (!entry_.calibrate_threshold(sensor_, 20)) {
++      return false;
++    }
++
+     exit_.roi_calibration(entry_.threshold.idle, exit_.threshold.idle, orientation_);
+-    exit_.calibrate_threshold(sensor_, 20);
++    if (!exit_.calibrate_threshold(sensor_, 20)) {
++      return false;
++    }
+ 
+     return true;
+   }
+@@ -132,6 +194,13 @@ class CounterEngine {
+     }
+   }
+ 
++  void apply_runtime_config() {
++    entry_.set_max_samples(runtime_cfg.sampling_size);
++    exit_.set_max_samples(runtime_cfg.sampling_size);
++    entry_.set_threshold_percentages(runtime_cfg.threshold_min_percent, runtime_cfg.threshold_max_percent);
++    exit_.set_threshold_percentages(runtime_cfg.threshold_min_percent, runtime_cfg.threshold_max_percent);
++  }
++
+   bool clamped_mode() const { return clamped_mode_; }
+   int people_counter() const { return people_counter_; }
+   bool presence() const { return presence_; }
+@@ -161,6 +230,11 @@ class CounterEngine {
+   }
+ 
+  private:
++  static constexpr int kLeftState = 1;
++  static constexpr int kRightState = 2;
++  static constexpr int kBothState = 3;
++  static constexpr int kBalanceDeltaMinMm = 120;
++
+   bool calibrate_distance() {
+     const ppc::RangingMode *initial = sensor_.get_ranging_mode_override();
+     if (initial == nullptr) {
+@@ -171,8 +245,9 @@ class CounterEngine {
+       return false;
+     }
+ 
+-    entry_.calibrate_threshold(sensor_, 20);
+-    exit_.calibrate_threshold(sensor_, 20);
++    if (!entry_.calibrate_threshold(sensor_, 20) || !exit_.calibrate_threshold(sensor_, 20)) {
++      return false;
++    }
+ 
+     if (sensor_.get_ranging_mode_override() != nullptr) {
+       return true;
+@@ -209,15 +284,24 @@ class CounterEngine {
+     pending_event_.ready = true;
+     pending_event_.name = name;
+     last_direction_ = name;
++    if (runtime_cfg.serial_debug_enabled) {
++      Serial.printf("[PPC][EVENT] %s count=%d\n", name, people_counter_);
++    }
+   }
+ 
+   void reset_path_tracking() {
+-    for (int &v : path_track_) {
+-      v = 0;
+-    }
+-    path_track_filling_size_ = 1;
+-    left_previous_status_ = kNobody;
+-    right_previous_status_ = kNobody;
++    tracking_active_ = false;
++    prev_combined_state_ = 0;
++    first_single_state_ = 0;
++    last_single_state_ = 0;
++    saw_both_state_ = false;
++    left_peak_distance_ = 0xFFFF;
++    right_peak_distance_ = 0xFFFF;
++    left_peak_time_ms_ = 0;
++    right_peak_time_ms_ = 0;
++    have_balance_window_ = false;
++    start_balance_mm_ = 0;
++    last_balance_mm_ = 0;
+     last_state_change_time_ = millis();
+   }
+ 
+@@ -229,76 +313,209 @@ class CounterEngine {
+     people_counter_ = next;
+   }
+ 
+-  void path_tracking(ppc::Zone &zone) {
+-    int current_zone_status = kNobody;
+-    int all_zones_current_status = 0;
+-    int event_has_occurred = 0;
+-    uint32_t now = millis();
++  void maybe_log_debug_sample(uint32_t now) {
++    if (!runtime_cfg.serial_debug_enabled) {
++      return;
++    }
++    if ((now - last_debug_sample_ms_) < runtime_cfg.serial_debug_sample_interval_ms) {
++      return;
++    }
++    last_debug_sample_ms_ = now;
++
++    Serial.printf("[PPC][DBG] d0=%u d1=%u th0=%u-%u th1=%u-%u occ0=%d occ1=%d cnt=%d pres=%d dir=%s\n",
++                  entry_.last_distance(),
++                  exit_.last_distance(),
++                  entry_.threshold.min,
++                  entry_.threshold.max,
++                  exit_.threshold.min,
++                  exit_.threshold.max,
++                  entry_.is_occupied() ? 1 : 0,
++                  exit_.is_occupied() ? 1 : 0,
++                  people_counter_,
++                  presence_ ? 1 : 0,
++                  last_direction_.c_str());
++  }
+ 
+-    if (path_track_filling_size_ > 1 && cfg::kPathTrackingTimeoutMs > 0) {
+-      if ((now - last_state_change_time_) > cfg::kPathTrackingTimeoutMs) {
+-        queue_event("Timeout");
+-        reset_path_tracking();
+-        return;
+-      }
++  int combined_state(bool &left_occupied,
++                     bool &right_occupied,
++                     uint16_t &left_distance,
++                     uint16_t &right_distance) const {
++    if (runtime_cfg.invert_direction) {
++      left_occupied = exit_.is_occupied();
++      right_occupied = entry_.is_occupied();
++      left_distance = exit_.min_distance();
++      right_distance = entry_.min_distance();
++    } else {
++      left_occupied = entry_.is_occupied();
++      right_occupied = exit_.is_occupied();
++      left_distance = entry_.min_distance();
++      right_distance = exit_.min_distance();
+     }
+ 
+-    if (zone.min_distance() < zone.threshold.max && zone.min_distance() > zone.threshold.min) {
+-      current_zone_status = kSomeone;
+-      presence_ = true;
++    return (left_occupied ? kLeftState : 0) + (right_occupied ? kRightState : 0);
++  }
++
++  int resolve_event_delta(uint32_t now) const {
++    int delta = 0;
++    const char *reason = "none";
++
++    if (saw_both_state_ && first_single_state_ != 0 && last_single_state_ != 0 &&
++        first_single_state_ != last_single_state_) {
++      if (first_single_state_ == kRightState && last_single_state_ == kLeftState) {
++        delta = 1;
++      } else if (first_single_state_ == kLeftState && last_single_state_ == kRightState) {
++        delta = -1;
++      }
++      if (delta != 0) {
++        reason = "first_last";
++      }
+     }
+ 
+-    bool is_left_zone = (&zone == (cfg::kInvertDirection ? &exit_ : &entry_));
+-    if (is_left_zone) {
+-      if (current_zone_status != left_previous_status_) {
+-        event_has_occurred = 1;
+-        if (current_zone_status == kSomeone) {
+-          all_zones_current_status += 1;
+-        }
+-        if (right_previous_status_ == kSomeone) {
+-          all_zones_current_status += 2;
++    if (delta == 0 && saw_both_state_ && left_peak_time_ms_ != 0 && right_peak_time_ms_ != 0) {
++      const uint32_t peak_dt = (left_peak_time_ms_ > right_peak_time_ms_) ? (left_peak_time_ms_ - right_peak_time_ms_)
++                                                                           : (right_peak_time_ms_ - left_peak_time_ms_);
++      if (peak_dt >= runtime_cfg.peak_time_delta_ms) {
++        if (right_peak_time_ms_ < left_peak_time_ms_) {
++          delta = 1;
++        } else {
++          delta = -1;
+         }
+-        left_previous_status_ = current_zone_status;
++        reason = "peak_time";
+       }
+-    } else {
+-      if (current_zone_status != right_previous_status_) {
+-        event_has_occurred = 1;
+-        if (current_zone_status == kSomeone) {
+-          all_zones_current_status += 2;
+-        }
+-        if (left_previous_status_ == kSomeone) {
+-          all_zones_current_status += 1;
++    }
++
++    if (delta == 0 && saw_both_state_ && have_balance_window_) {
++      const int abs_start = (start_balance_mm_ < 0) ? -start_balance_mm_ : start_balance_mm_;
++      const int abs_end = (last_balance_mm_ < 0) ? -last_balance_mm_ : last_balance_mm_;
++      if (abs_start >= kBalanceDeltaMinMm && abs_end >= kBalanceDeltaMinMm) {
++        if (start_balance_mm_ < 0 && last_balance_mm_ > 0) {
++          delta = 1;
++          reason = "balance_cross";
++        } else if (start_balance_mm_ > 0 && last_balance_mm_ < 0) {
++          delta = -1;
++          reason = "balance_cross";
+         }
+-        right_previous_status_ = current_zone_status;
+       }
+     }
+ 
+-    if (event_has_occurred) {
++    if (runtime_cfg.serial_debug_enabled) {
++      Serial.printf("[PPC][TRACE] finalize reason=%s first=%d last=%d both=%d peakL=%lu peakR=%lu bal=%d->%d now=%lu delta=%d\n",
++                    reason,
++                    first_single_state_,
++                    last_single_state_,
++                    saw_both_state_ ? 1 : 0,
++                    left_peak_time_ms_,
++                    right_peak_time_ms_,
++                    start_balance_mm_,
++                    last_balance_mm_,
++                    now,
++                    delta);
++    }
++
++    return delta;
++  }
++  void commit_event_delta(int delta, uint32_t now) {
++    if (delta == 0) {
++      return;
++    }
++
++    if ((now - last_count_event_ms_) < runtime_cfg.event_cooldown_ms) {
++      if (runtime_cfg.serial_debug_enabled) {
++        Serial.printf("[PPC][TRACE] %s ignored by cooldown (%lu ms)\n",
++                      delta > 0 ? "Entry" : "Exit",
++                      now - last_count_event_ms_);
++      }
++      return;
++    }
++
++    if (delta > 0) {
++      total_entry_today_++;
++      update_counter(1);
++      queue_event("Entry");
++    } else {
++      total_exit_today_++;
++      update_counter(-1);
++      queue_event("Exit");
++    }
++    last_count_event_ms_ = now;
++  }
++
++  void path_tracking() {
++    const uint32_t now = millis();
++    bool left_occupied = false;
++    bool right_occupied = false;
++    uint16_t left_distance = 0;
++    uint16_t right_distance = 0;
++    const int state = combined_state(left_occupied, right_occupied, left_distance, right_distance);
++
++    presence_ = (state != 0);
++
++    if (!tracking_active_) {
++      if (state == 0) {
++        return;
++      }
++      reset_path_tracking();
++      tracking_active_ = true;
++      prev_combined_state_ = state;
+       last_state_change_time_ = now;
+-      if (path_track_filling_size_ < 4) {
+-        path_track_filling_size_++;
++    }
++
++    if (runtime_cfg.path_tracking_timeout_ms > 0 && (now - last_state_change_time_) > runtime_cfg.path_tracking_timeout_ms) {
++      queue_event("Timeout");
++      if (runtime_cfg.serial_debug_enabled) {
++        Serial.printf("[PPC][TRACE] timeout state=%d age=%lu\n", prev_combined_state_, now - last_state_change_time_);
+       }
++      reset_path_tracking();
++      return;
++    }
+ 
+-      if (left_previous_status_ == kNobody && right_previous_status_ == kNobody) {
+-        if (path_track_filling_size_ == 4) {
+-          if (path_track_[1] == 1 && path_track_[2] == 3 && path_track_[3] == 2) {
+-            total_exit_today_++;
+-            update_counter(-1);
+-            queue_event("Exit");
+-          } else if (path_track_[1] == 2 && path_track_[2] == 3 && path_track_[3] == 1) {
+-            total_entry_today_++;
+-            update_counter(1);
+-            queue_event("Entry");
+-          }
+-        }
+-        reset_path_tracking();
+-      } else {
+-        path_track_[path_track_filling_size_ - 1] = all_zones_current_status;
++    if (state == kBothState) {
++      saw_both_state_ = true;
++    }
++
++    if (state == kLeftState || state == kRightState) {
++      if (first_single_state_ == 0) {
++        first_single_state_ = state;
+       }
++      last_single_state_ = state;
+     }
+ 
+-    if (current_zone_status == kNobody && left_previous_status_ == kNobody && right_previous_status_ == kNobody) {
+-      presence_ = false;
++    if (left_occupied && left_distance > 0 && left_distance < left_peak_distance_) {
++      left_peak_distance_ = left_distance;
++      left_peak_time_ms_ = now;
++    }
++    if (right_occupied && right_distance > 0 && right_distance < right_peak_distance_) {
++      right_peak_distance_ = right_distance;
++      right_peak_time_ms_ = now;
++    }
++    if (state != 0 && left_distance > 0 && right_distance > 0) {
++      const int balance_mm = static_cast<int>(right_distance) - static_cast<int>(left_distance);
++      if (!have_balance_window_) {
++        start_balance_mm_ = balance_mm;
++        have_balance_window_ = true;
++      }
++      last_balance_mm_ = balance_mm;
++    }
++
++    if (state != prev_combined_state_) {
++      if (runtime_cfg.serial_debug_enabled) {
++        Serial.printf("[PPC][TRACE] state %d->%d left=%d right=%d first=%d last=%d both=%d\n",
++                      prev_combined_state_,
++                      state,
++                      left_occupied ? 1 : 0,
++                      right_occupied ? 1 : 0,
++                      first_single_state_,
++                      last_single_state_,
++                      saw_both_state_ ? 1 : 0);
++      }
++      prev_combined_state_ = state;
++      last_state_change_time_ = now;
++    }
++
++    if (state == 0) {
++      const int delta = resolve_event_delta(now);
++      commit_event_delta(delta, now);
++      reset_path_tracking();
+     }
+   }
+ 
+@@ -313,10 +530,10 @@ class CounterEngine {
+       }
+ 
+       const uint32_t empty_duration = now - zones_empty_since_;
+-      if (empty_duration >= cfg::kAdaptiveThresholdIntervalMs &&
+-          (now - last_adaptive_update_time_) >= cfg::kAdaptiveThresholdIntervalMs) {
+-        entry_.update_adaptive_threshold(cfg::kAdaptiveThresholdAlpha);
+-        exit_.update_adaptive_threshold(cfg::kAdaptiveThresholdAlpha);
++      if (empty_duration >= runtime_cfg.adaptive_threshold_interval_ms &&
++          (now - last_adaptive_update_time_) >= runtime_cfg.adaptive_threshold_interval_ms) {
++        entry_.update_adaptive_threshold(runtime_cfg.adaptive_threshold_alpha);
++        exit_.update_adaptive_threshold(runtime_cfg.adaptive_threshold_alpha);
+         last_adaptive_update_time_ = now;
+       }
+     } else {
+@@ -350,7 +567,6 @@ class CounterEngine {
+   ppc::Vl53l1xDevice sensor_{};
+   ppc::Zone entry_{0};
+   ppc::Zone exit_{1};
+-  ppc::Zone *current_zone_{&entry_};
+ 
+   ppc::Orientation orientation_{ppc::Orientation::Parallel};
+ 
+@@ -364,15 +580,26 @@ class CounterEngine {
+   uint32_t total_exit_today_{0};
+   int last_reset_day_of_year_{-1};
+ 
+-  int path_track_[4] = {0, 0, 0, 0};
+-  int path_track_filling_size_{1};
+-  int left_previous_status_{kNobody};
+-  int right_previous_status_{kNobody};
++  bool tracking_active_{false};
++  int prev_combined_state_{0};
++  int first_single_state_{0};
++  int last_single_state_{0};
++  bool saw_both_state_{false};
++  uint16_t left_peak_distance_{0xFFFF};
++  uint16_t right_peak_distance_{0xFFFF};
++  uint32_t left_peak_time_ms_{0};
++  uint32_t right_peak_time_ms_{0};
++  bool have_balance_window_{false};
++  int start_balance_mm_{0};
++  int last_balance_mm_{0};
+   uint32_t last_state_change_time_{0};
+ 
+   uint32_t last_adaptive_update_time_{0};
+   uint32_t zones_empty_since_{0};
+   bool zones_were_occupied_{false};
++  uint32_t last_count_event_ms_{0};
++
++  uint32_t last_debug_sample_ms_{0};
+ 
+   PendingEvent pending_event_{};
+ };
+@@ -410,6 +637,25 @@ void publish_ack(const String &request_id, bool ok, const String &message) {
+   publish_json(topic_ack, doc, false);
+ }
+ 
++void append_runtime_config(JsonObject obj) {
++  obj["invert_direction"] = runtime_cfg.invert_direction;
++  obj["sampling"] = runtime_cfg.sampling_size;
++  obj["threshold_min_percent"] = runtime_cfg.threshold_min_percent;
++  obj["threshold_max_percent"] = runtime_cfg.threshold_max_percent;
++  obj["path_tracking_timeout_ms"] = runtime_cfg.path_tracking_timeout_ms;
++  obj["event_cooldown_ms"] = runtime_cfg.event_cooldown_ms;
++  obj["peak_time_delta_ms"] = runtime_cfg.peak_time_delta_ms;
++
++  JsonObject adaptive = obj["adaptive"].to<JsonObject>();
++  adaptive["enabled"] = runtime_cfg.adaptive_threshold_enabled;
++  adaptive["interval_ms"] = runtime_cfg.adaptive_threshold_interval_ms;
++  adaptive["alpha"] = runtime_cfg.adaptive_threshold_alpha;
++
++  JsonObject debug = obj["debug"].to<JsonObject>();
++  debug["serial_enabled"] = runtime_cfg.serial_debug_enabled;
++  debug["sample_interval_ms"] = runtime_cfg.serial_debug_sample_interval_ms;
++}
++
+ void publish_meta() {
+   JsonDocument doc;
+   doc["fw_version"] = kFwVersion;
+@@ -419,7 +665,9 @@ void publish_meta() {
+   doc["schema"] = "ppc/v1";
+   doc["features"]["commands"] = true;
+   doc["features"]["daily_totals"] = true;
+-  doc["features"]["adaptive_threshold"] = cfg::kAdaptiveThresholdEnabled;
++  doc["features"]["adaptive_threshold"] = true;
++  doc["features"]["dynamic_config"] = true;
++  doc["features"]["serial_debug"] = true;
+   publish_json(topic_meta, doc, true);
+ }
+ 
+@@ -452,6 +700,9 @@ void publish_state() {
+   health["uptime_s"] = millis() / 1000UL;
+   health["sensor_status"] = static_cast<int>(engine.sensor_status());
+ 
++  JsonObject config = doc["config"].to<JsonObject>();
++  append_runtime_config(config);
++
+   publish_json(topic_state, doc, true);
+ }
+ 
+@@ -489,6 +740,171 @@ void connect_wifi() {
+   WiFi.begin(cfg::kWifiSsid, cfg::kWifiPassword);
+ }
+ 
++bool apply_runtime_config_from_json(JsonObjectConst cfg_obj, String &error_message) {
++  bool changed_any = false;
++  bool needs_recalibration = false;
++
++  JsonVariantConst v_sampling = cfg_obj["sampling"];
++  if (!v_sampling.isNull()) {
++    uint32_t sampling = 0;
++    if (!parse_uint32(v_sampling, sampling) || sampling < 1 || sampling > 16) {
++      error_message = "invalid_sampling";
++      return false;
++    }
++    runtime_cfg.sampling_size = static_cast<uint8_t>(sampling);
++    changed_any = true;
++    needs_recalibration = true;
++  }
++
++  JsonVariantConst v_min = cfg_obj["threshold_min_percent"];
++  if (!v_min.isNull()) {
++    uint32_t min_percent = 0;
++    if (!parse_uint32(v_min, min_percent) || min_percent > 100) {
++      error_message = "invalid_threshold_min_percent";
++      return false;
++    }
++    runtime_cfg.threshold_min_percent = static_cast<uint8_t>(min_percent);
++    changed_any = true;
++    needs_recalibration = true;
++  }
++
++  JsonVariantConst v_max = cfg_obj["threshold_max_percent"];
++  if (!v_max.isNull()) {
++    uint32_t max_percent = 0;
++    if (!parse_uint32(v_max, max_percent) || max_percent > 100) {
++      error_message = "invalid_threshold_max_percent";
++      return false;
++    }
++    runtime_cfg.threshold_max_percent = static_cast<uint8_t>(max_percent);
++    changed_any = true;
++    needs_recalibration = true;
++  }
++
++  if (runtime_cfg.threshold_min_percent >= runtime_cfg.threshold_max_percent) {
++    error_message = "threshold_min_must_be_less_than_max";
++    return false;
++  }
++
++  JsonVariantConst v_timeout = cfg_obj["path_tracking_timeout_ms"];
++  if (!v_timeout.isNull()) {
++    uint32_t timeout_ms = 0;
++    if (!parse_uint32(v_timeout, timeout_ms) || timeout_ms > 60000) {
++      error_message = "invalid_path_tracking_timeout_ms";
++      return false;
++    }
++    runtime_cfg.path_tracking_timeout_ms = timeout_ms;
++    changed_any = true;
++  }
++
++  JsonVariantConst v_event_cooldown = cfg_obj["event_cooldown_ms"];
++  if (!v_event_cooldown.isNull()) {
++    uint32_t cooldown_ms = 0;
++    if (!parse_uint32(v_event_cooldown, cooldown_ms) || cooldown_ms > 10000) {
++      error_message = "invalid_event_cooldown_ms";
++      return false;
++    }
++    runtime_cfg.event_cooldown_ms = cooldown_ms;
++    changed_any = true;
++  }
++
++
++  JsonVariantConst v_peak_delta = cfg_obj["peak_time_delta_ms"];
++  if (!v_peak_delta.isNull()) {
++    uint32_t peak_delta_ms = 0;
++    if (!parse_uint32(v_peak_delta, peak_delta_ms) || peak_delta_ms > 2000) {
++      error_message = "invalid_peak_time_delta_ms";
++      return false;
++    }
++    runtime_cfg.peak_time_delta_ms = peak_delta_ms;
++    changed_any = true;
++  }
++  JsonVariantConst v_invert = cfg_obj["invert_direction"];
++  if (!v_invert.isNull()) {
++    if (!v_invert.is<bool>()) {
++      error_message = "invalid_invert_direction";
++      return false;
++    }
++    runtime_cfg.invert_direction = v_invert.as<bool>();
++    changed_any = true;
++  }
++
++  JsonVariantConst v_debug_enabled = cfg_obj["debug_serial"];
++  if (!v_debug_enabled.isNull()) {
++    if (!v_debug_enabled.is<bool>()) {
++      error_message = "invalid_debug_serial";
++      return false;
++    }
++    runtime_cfg.serial_debug_enabled = v_debug_enabled.as<bool>();
++    changed_any = true;
++  }
++
++  JsonVariantConst v_debug_interval = cfg_obj["debug_interval_ms"];
++  if (!v_debug_interval.isNull()) {
++    uint32_t interval_ms = 0;
++    if (!parse_uint32(v_debug_interval, interval_ms) || interval_ms < 20 || interval_ms > 10000) {
++      error_message = "invalid_debug_interval_ms";
++      return false;
++    }
++    runtime_cfg.serial_debug_sample_interval_ms = interval_ms;
++    changed_any = true;
++  }
++
++  JsonVariantConst adaptive_obj_var = cfg_obj["adaptive"];
++  if (!adaptive_obj_var.isNull()) {
++    if (!adaptive_obj_var.is<JsonObjectConst>()) {
++      error_message = "invalid_adaptive_object";
++      return false;
++    }
++
++    JsonObjectConst adaptive_obj = adaptive_obj_var.as<JsonObjectConst>();
++
++    JsonVariantConst v_adaptive_enabled = adaptive_obj["enabled"];
++    if (!v_adaptive_enabled.isNull()) {
++      if (!v_adaptive_enabled.is<bool>()) {
++        error_message = "invalid_adaptive_enabled";
++        return false;
++      }
++      runtime_cfg.adaptive_threshold_enabled = v_adaptive_enabled.as<bool>();
++      changed_any = true;
++    }
++
++    JsonVariantConst v_adaptive_interval = adaptive_obj["interval_ms"];
++    if (!v_adaptive_interval.isNull()) {
++      uint32_t interval_ms = 0;
++      if (!parse_uint32(v_adaptive_interval, interval_ms) || interval_ms < 1000 || interval_ms > 3600000) {
++        error_message = "invalid_adaptive_interval_ms";
++        return false;
++      }
++      runtime_cfg.adaptive_threshold_interval_ms = interval_ms;
++      changed_any = true;
++    }
++
++    JsonVariantConst v_adaptive_alpha = adaptive_obj["alpha"];
++    if (!v_adaptive_alpha.isNull()) {
++      float alpha = 0.0f;
++      if (!parse_float(v_adaptive_alpha, alpha) || alpha <= 0.0f || alpha > 1.0f) {
++        error_message = "invalid_adaptive_alpha";
++        return false;
++      }
++      runtime_cfg.adaptive_threshold_alpha = alpha;
++      changed_any = true;
++    }
++  }
++
++  if (!changed_any) {
++    error_message = "no_supported_fields";
++    return false;
++  }
++
++  engine.apply_runtime_config();
++  if (needs_recalibration && !engine.recalibrate()) {
++    error_message = "recalibration_failed_after_config_update";
++    return false;
++  }
++
++  return true;
++}
++
+ void mqtt_callback(char *topic, uint8_t *payload, unsigned int length) {
+   if (String(topic) != topic_cmd) {
+     return;
+@@ -511,6 +927,22 @@ void mqtt_callback(char *topic, uint8_t *payload, unsigned int length) {
+     return;
+   }
+ 
++  if (cmd == "get_config") {
++    publish_ack(request_id, true, "config_in_state");
++    publish_state();
++    return;
++  }
++
++  if (cmd == "set_config") {
++    JsonObjectConst cfg_obj = doc["config"].is<JsonObjectConst>() ? doc["config"].as<JsonObjectConst>()
++                                                                    : doc.as<JsonObjectConst>();
++    String error_message;
++    bool ok = apply_runtime_config_from_json(cfg_obj, error_message);
++    publish_ack(request_id, ok, ok ? "config_updated" : error_message);
++    publish_state();
++    return;
++  }
++
+   if (cmd == "set_people_counter") {
+     if (!doc["value"].is<int>()) {
+       publish_ack(request_id, false, "missing_integer_value");
+@@ -654,3 +1086,4 @@ void loop() {
+   delay(2);
+ }
+ 
++
+diff --git a/src/ppc_zone.cpp b/src/ppc_zone.cpp
+index 2a4345c..7b1d6fd 100644
+--- a/src/ppc_zone.cpp
++++ b/src/ppc_zone.cpp
+@@ -51,7 +51,7 @@ void Zone::reset_roi(uint8_t default_center) {
+                 roi.center);
+ }
+ 
+-void Zone::calibrate_threshold(Vl53l1xDevice &sensor, int number_attempts) {
++bool Zone::calibrate_threshold(Vl53l1xDevice &sensor, int number_attempts) {
+   std::vector<int> values;
+   values.reserve(number_attempts);
+   int sum = 0;
+@@ -66,16 +66,35 @@ void Zone::calibrate_threshold(Vl53l1xDevice &sensor, int number_attempts) {
+     delay(2);
+   }
+ 
+-  if (values.empty()) {
+-    return;
++  if (values.size() < 3) {
++    Serial.printf("[Zone] %s threshold calibration failed: only %u valid samples\n",
++                  id_ == 0 ? "Entry" : "Exit",
++                  static_cast<unsigned>(values.size()));
++    return false;
+   }
+ 
+   threshold.idle = static_cast<uint16_t>(get_optimized_value(values, sum));
+   threshold.max = static_cast<uint16_t>((static_cast<uint32_t>(threshold.idle) * threshold.max_percent) / 100U);
+   threshold.min = static_cast<uint16_t>((static_cast<uint32_t>(threshold.idle) * threshold.min_percent) / 100U);
+ 
+-  Serial.printf("[Zone] %s threshold idle=%u min=%u(%u%%) max=%u(%u%%)\n", id_ == 0 ? "Entry" : "Exit",
+-                threshold.idle, threshold.min, threshold.min_percent, threshold.max, threshold.max_percent);
++  Serial.printf("[Zone] %s threshold idle=%u min=%u(%u%%) max=%u(%u%%)\n",
++                id_ == 0 ? "Entry" : "Exit",
++                threshold.idle,
++                threshold.min,
++                threshold.min_percent,
++                threshold.max,
++                threshold.max_percent);
++
++  if (threshold.idle == 0 || threshold.max <= threshold.min) {
++    Serial.printf("[Zone] %s threshold calibration invalid: idle=%u min=%u max=%u\n",
++                  id_ == 0 ? "Entry" : "Exit",
++                  threshold.idle,
++                  threshold.min,
++                  threshold.max);
++    return false;
++  }
++
++  return true;
+ }
+ 
+ void Zone::roi_calibration(uint16_t entry_idle, uint16_t exit_idle, Orientation orientation) {
+diff --git a/src/ppc_zone.h b/src/ppc_zone.h
+index 631aa25..b083b62 100644
+--- a/src/ppc_zone.h
++++ b/src/ppc_zone.h
+@@ -16,7 +16,7 @@ class Zone {
+ 
+   void reset_roi(uint8_t default_center);
+   void roi_calibration(uint16_t entry_idle, uint16_t exit_idle, Orientation orientation);
+-  void calibrate_threshold(Vl53l1xDevice &sensor, int number_attempts);
++  bool calibrate_threshold(Vl53l1xDevice &sensor, int number_attempts);
+ 
+   bool read_distance(Vl53l1xDevice &sensor, VL53L1_Error &status_out);
+   void update_adaptive_threshold(float alpha);
+@@ -27,7 +27,7 @@ class Zone {
+   uint8_t id() const { return id_; }
+ 
+   Roi roi{};
+-  Roi roi_override{};
++  Roi roi_override{0, 0, 0};
+   Threshold threshold{};
+ 
+  private:
+@@ -41,3 +41,5 @@ class Zone {
+ };
+ 
+ }  // namespace ppc
++
++

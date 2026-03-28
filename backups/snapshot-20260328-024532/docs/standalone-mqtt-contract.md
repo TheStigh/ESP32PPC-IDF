@@ -29,8 +29,6 @@ This firmware publishes and subscribes under:
   `{ "request_id": "abc", "cmd": "set_door_protection", "enabled": true, "mm": 100 }`
 - Restart:
   `{ "request_id": "abc", "cmd": "restart" }`
-- Factory reset (clear app NVS and reboot):
-  `{ "request_id": "abc", "cmd": "factory_reset", "confirm": "ERASE_NVS" }`
 
 ## State payload behavior
 
@@ -43,7 +41,6 @@ This firmware publishes and subscribes under:
 - `recalibrate` ACK includes `calibration` details (`ranging_mode`, zone thresholds, ROI size/center).
 - `recalibrate` resets serial debug to firmware default (`debug_serial=false` by default).
 - `set_clamped` and `set_clamped_mode` accept `value` as `true|false`, `1|0`, or `"on"|"off"`.
-- `factory_reset` requires confirmation (`true`, `1`, `"on"`, `"ERASE_NVS"`, or `"FACTORY_RESET"`) and ACKs `factory_reset_restarting` on success.
 
 ## Runtime config notes
 
@@ -62,15 +59,8 @@ This firmware publishes and subscribes under:
 
 ## Persistence behavior
 
-- Persisted (survives reboot): provisioning config (Wi-Fi, broker, CA cert, customer/device IDs), runtime config tuning, door protection, `people_counter`, `clamped_mode`, latest calibration snapshot.
+- Persisted (survives reboot): runtime config tuning, door protection, `people_counter`, `clamped_mode`, latest calibration snapshot.
 - Not persisted: runtime state (`presence`, `last_direction`, daily totals, uptime/seq), and debug runtime mode (`debug_serial` resets to default disabled on reboot).
-
-## Provisioning behavior
-
-- If no valid provisioning config exists in NVS, firmware starts local setup AP + web page.
-- AP SSID pattern: `{kProvisionApSsidPrefix}-XXXX`.
-- Setup page is served at `http://192.168.4.1`.
-- After save, device reboots and uses NVS-provisioned Wi-Fi/MQTT/topic identity.
 
 ## ACL recommendation
 

@@ -1,9 +1,7 @@
 #include <Arduino.h>
 #include <ArduinoJson.h>
-#include <DNSServer.h>
 #include <Preferences.h>
 #include <PubSubClient.h>
-#include <WebServer.h>
 #include <WiFi.h>
 #include <WiFiClientSecure.h>
 #include <algorithm>
@@ -12,7 +10,6 @@
 #include <optional>
 #include <string>
 #include "app_config.h"
-#include "ismart_logo.h"
 #include "ppc_zone.h"
 #include "vl53l1x_device.h"
 
@@ -23,13 +20,6 @@ namespace {
   constexpr uint16_t kPersistedSettingsSchema = 1;
   constexpr char kPrefsNamespace[] = "esp32ppc";
   constexpr char kPrefsKeySettings[] = "settings";
-  constexpr uint16_t kProvisioningSchema = 1;
-  constexpr char kPrefsKeyProvisioning[] = "provision";
-  constexpr uint8_t kProvisionPortalDnsPort = 53;
-  const IPAddress kProvisionApIp(192, 168, 4, 1);
-  const IPAddress kProvisionApGateway(192, 168, 4, 1);
-  const IPAddress kProvisionApSubnet(255, 255, 255, 0);
-  constexpr size_t kMaxCaCertLength = 4096;
   struct PersistedCalibration {
      bool valid {
       false
@@ -100,24 +90,6 @@ namespace {
   RuntimeConfig runtime_cfg {
      cfg::kInvertDirection, cfg::kSamplingSize, cfg::kThresholdMinPercent, cfg::kThresholdMaxPercent, cfg::kPathTrackingTimeoutMs, cfg::kEventCooldownMs, cfg::kPeakTimeDeltaMs, cfg::kAdaptiveThresholdEnabled, cfg::kAdaptiveThresholdIntervalMs, cfg::kAdaptiveThresholdAlpha, cfg::kSerialDebugEnabled, cfg::kSerialDebugSampleIntervalMs, cfg::kDoorProtectionEnabled, cfg::kDoorProtectionDistanceMm,
   };
-  struct ProvisioningConfig {
-     String wifi_ssid;
-     String wifi_password;
-     String mqtt_host;
-     uint16_t mqtt_port_plain;
-     uint16_t mqtt_port_tls;
-     bool mqtt_use_tls;
-     String mqtt_username;
-     String mqtt_password;
-     String mqtt_ca_cert;
-     String customer_id;
-     String device_id;
-
-  };
-  ProvisioningConfig provisioning_cfg;
-  WebServer provisioning_server(80);
-  DNSServer provisioning_dns;
-  bool provisioning_restart_requested = false;
   WiFiClient plain_client;
   WiFiClientSecure tls_client;
   PubSubClient mqtt_client(plain_client);
@@ -214,525 +186,6 @@ namespace {
     
   }
 
-  String trim_copy(String value) {
-     value.trim();
-     return value;
-
-  }
-
-  bool parse_port_string(const String &value, uint16_t &out) {
-     const String trimmed = trim_copy(value);
-     if (trimmed.isEmpty()) {
-       return false;
-    }
-     char *end = nullptr;
-     unsigned long parsed = strtoul(trimmed.c_str(), &end, 10);
-     if (end == nullptr || *end != '\0' || parsed == 0 || parsed > 65535UL) {
-       return false;
-    }
-     out = static_cast<uint16_t>(parsed);
-     return true;
-
-  }
-
-  String default_device_id() {
-     uint64_t chip = ESP.getEfuseMac();
-     char id[40];
-     snprintf(id, sizeof(id), "esp32ppc-%04X", static_cast<unsigned>(chip & 0xFFFFU));
-     return String(id);
-
-  }
-
-  void reset_provisioning_defaults() {
-     provisioning_cfg.wifi_ssid = cfg::kWifiSsid;
-     provisioning_cfg.wifi_password = cfg::kWifiPassword;
-     provisioning_cfg.mqtt_host = cfg::kMqttHost;
-     provisioning_cfg.mqtt_port_plain = cfg::kMqttPortPlain;
-     provisioning_cfg.mqtt_port_tls = cfg::kMqttPortTls;
-     provisioning_cfg.mqtt_use_tls = cfg::kMqttUseTls;
-     provisioning_cfg.mqtt_username = cfg::kMqttUsername;
-     provisioning_cfg.mqtt_password = cfg::kMqttPassword;
-     provisioning_cfg.mqtt_ca_cert = cfg::kMqttCaCert;
-     provisioning_cfg.customer_id = cfg::kCustomerId;
-     provisioning_cfg.device_id = cfg::kDeviceId;
-     if (trim_copy(provisioning_cfg.device_id).isEmpty()) {
-       provisioning_cfg.device_id = default_device_id();
-    }
-
-  }
-
-  bool provisioning_config_valid() {
-     return !trim_copy(provisioning_cfg.wifi_ssid).isEmpty() && !trim_copy(provisioning_cfg.mqtt_host).isEmpty() && provisioning_cfg.mqtt_port_plain > 0 && provisioning_cfg.mqtt_port_tls > 0 && !trim_copy(provisioning_cfg.customer_id).isEmpty() && !trim_copy(provisioning_cfg.device_id).isEmpty();
-
-  }
-
-  String html_escape(const String &value) {
-     String out;
-     out.reserve(value.length() + 16);
-     for (size_t i = 0; i < value.length(); ++i) {
-       char c = value[i];
-       if (c == '&') {
-         out += "&amp;";
-      }
-       else if (c == '<') {
-         out += "&lt;";
-      }
-       else if (c == '>') {
-         out += "&gt;";
-      }
-       else if (c == '"') {
-         out += "&quot;";
-      }
-       else {
-         out += c;
-      }
-    }
-     return out;
-
-  }
-
-  bool save_provisioning_settings() {
-     Preferences prefs;
-     if (!prefs.begin(kPrefsNamespace, false)) {
-       Serial.println("[CFG] Preferences open failed (write provisioning)");
-       return false;
-    }
-
-     JsonDocument doc;
-     doc["schema"] = kProvisioningSchema;
-     doc["wifi"]["ssid"] = provisioning_cfg.wifi_ssid;
-     doc["wifi"]["password"] = provisioning_cfg.wifi_password;
-     doc["mqtt"]["host"] = provisioning_cfg.mqtt_host;
-     doc["mqtt"]["port_plain"] = provisioning_cfg.mqtt_port_plain;
-     doc["mqtt"]["port_tls"] = provisioning_cfg.mqtt_port_tls;
-     doc["mqtt"]["use_tls"] = provisioning_cfg.mqtt_use_tls;
-     doc["mqtt"]["username"] = provisioning_cfg.mqtt_username;
-     doc["mqtt"]["password"] = provisioning_cfg.mqtt_password;
-     doc["mqtt"]["ca_cert"] = provisioning_cfg.mqtt_ca_cert;
-     doc["topic"]["customer_id"] = provisioning_cfg.customer_id;
-     doc["topic"]["device_id"] = provisioning_cfg.device_id;
-
-     String payload;
-     serializeJson(doc, payload);
-     size_t written = prefs.putString(kPrefsKeyProvisioning, payload);
-     prefs.end();
-     if (written == 0) {
-       Serial.println("[CFG] Persisted provisioning write failed");
-       return false;
-    }
-     return true;
-
-  }
-
-  void load_provisioning_settings() {
-     reset_provisioning_defaults();
-
-     Preferences prefs;
-     if (!prefs.begin(kPrefsNamespace, true)) {
-       Serial.println("[CFG] Preferences open failed (read provisioning)");
-       return;
-    }
-     String payload = prefs.getString(kPrefsKeyProvisioning, "");
-     prefs.end();
-     if (payload.isEmpty()) {
-       return;
-    }
-
-     JsonDocument doc;
-     DeserializationError err = deserializeJson(doc, payload);
-     if (err) {
-       Serial.printf("[CFG] Persisted provisioning parse failed: %s\n", err.c_str());
-       return;
-    }
-
-     JsonObjectConst wifi_obj = doc["wifi"].as<JsonObjectConst>();
-     if (!wifi_obj.isNull()) {
-       if (wifi_obj["ssid"].is<const char *>()) {
-         provisioning_cfg.wifi_ssid = wifi_obj["ssid"].as<const char *>();
-      }
-       if (wifi_obj["password"].is<const char *>()) {
-         provisioning_cfg.wifi_password = wifi_obj["password"].as<const char *>();
-      }
-    }
-
-     JsonObjectConst mqtt_obj = doc["mqtt"].as<JsonObjectConst>();
-     if (!mqtt_obj.isNull()) {
-       if (mqtt_obj["host"].is<const char *>()) {
-         provisioning_cfg.mqtt_host = mqtt_obj["host"].as<const char *>();
-      }
-       uint32_t port_plain = 0;
-       if (parse_uint32(mqtt_obj["port_plain"], port_plain) && port_plain > 0 && port_plain <= 65535) {
-         provisioning_cfg.mqtt_port_plain = static_cast<uint16_t>(port_plain);
-      }
-       uint32_t port_tls = 0;
-       if (parse_uint32(mqtt_obj["port_tls"], port_tls) && port_tls > 0 && port_tls <= 65535) {
-         provisioning_cfg.mqtt_port_tls = static_cast<uint16_t>(port_tls);
-      }
-       bool use_tls = false;
-       if (parse_bool(mqtt_obj["use_tls"], use_tls)) {
-         provisioning_cfg.mqtt_use_tls = use_tls;
-      }
-       if (mqtt_obj["username"].is<const char *>()) {
-         provisioning_cfg.mqtt_username = mqtt_obj["username"].as<const char *>();
-      }
-       if (mqtt_obj["password"].is<const char *>()) {
-         provisioning_cfg.mqtt_password = mqtt_obj["password"].as<const char *>();
-      }
-       if (mqtt_obj["ca_cert"].is<const char *>()) {
-         provisioning_cfg.mqtt_ca_cert = mqtt_obj["ca_cert"].as<const char *>();
-      }
-    }
-
-     JsonObjectConst topic_obj = doc["topic"].as<JsonObjectConst>();
-     if (!topic_obj.isNull()) {
-       if (topic_obj["customer_id"].is<const char *>()) {
-         provisioning_cfg.customer_id = topic_obj["customer_id"].as<const char *>();
-      }
-       if (topic_obj["device_id"].is<const char *>()) {
-         provisioning_cfg.device_id = topic_obj["device_id"].as<const char *>();
-      }
-    }
-
-     provisioning_cfg.wifi_ssid = trim_copy(provisioning_cfg.wifi_ssid);
-     provisioning_cfg.mqtt_host = trim_copy(provisioning_cfg.mqtt_host);
-     provisioning_cfg.customer_id = trim_copy(provisioning_cfg.customer_id);
-     provisioning_cfg.device_id = trim_copy(provisioning_cfg.device_id);
-     if (provisioning_cfg.device_id.isEmpty()) {
-       provisioning_cfg.device_id = default_device_id();
-    }
-
-     Serial.println("[CFG] Provisioning settings loaded");
-  }
-
-  bool clear_all_persisted_data() {
-     Preferences prefs;
-     if (!prefs.begin(kPrefsNamespace, false)) {
-       Serial.println("[CFG] Preferences open failed (factory reset)");
-       return false;
-    }
-     bool ok = prefs.clear();
-     prefs.end();
-     return ok;
-  }
-
-  const char kProvisionPageTemplate[] = R"rawliteral(
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>ESP32PPC Setup</title>
-<style>
-  :root { --blue: #1f6fdb; --blue-hover: #185fc0; --border: #d9e1ea; --bg: #ffffff; --text: #1a1f2a; }
-  body { margin: 0; font-family: Segoe UI, Tahoma, sans-serif; background: var(--bg); color: var(--text); }
-  .wrap { max-width: 760px; margin: 24px auto; padding: 18px; }
-  .card { border: 1px solid var(--border); border-radius: 12px; padding: 18px; margin-bottom: 14px; }
-  .topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
-  h1 { margin: 0; font-size: 22px; }
-  .brand-logo-img { height: 34px; width: auto; display: block; object-fit: contain; }
-  h2 { margin: 0 0 10px 0; font-size: 18px; }
-  label { display: block; margin: 8px 0 4px 0; font-weight: 600; }
-  input, select, textarea { width: 100%; box-sizing: border-box; border: 1px solid #c7d1dc; border-radius: 8px; padding: 10px; font-size: 14px; }
-  textarea { min-height: 150px; resize: vertical; }
-  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 0; border-radius: 8px; padding: 10px 16px; background: var(--blue); color: #fff; font-weight: 600; cursor: pointer; }
-  .btn:hover { background: var(--blue-hover); }
-  .btn:disabled { opacity: 0.7; cursor: not-allowed; }
-  .scan-status { margin-top: 6px; min-height: 18px; }
-  .spinner { width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.45); border-top-color: #ffffff; border-radius: 50%; animation: spin 0.8s linear infinite; }
-  [hidden] { display: none !important; }
-  @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-  .muted { color: #5a6678; font-size: 13px; }
-  .msg { border: 1px solid #8ac0ff; background: #eef6ff; color: #103a70; border-radius: 8px; padding: 10px; margin-bottom: 12px; }
-  .check { display: flex; align-items: center; gap: 8px; margin: 10px 0; }
-  .check input { width: auto; }
-</style>
-</head>
-<body>
-  <div class="wrap">
-    <div class="topbar">
-      <h1>ESP32PPC Provisioning</h1>
-      <img class="brand-logo-img" src="/logo.png" alt="ismart logo" />
-    </div>
-    %MESSAGE%
-    <form method="post" action="/save">
-      <div class="card">
-        <h2>WiFi</h2>
-        <label for="wifi_ssid">Network (SSID)</label>
-        <div class="row">
-          <select id="wifi_list" onchange="selectWifi()"><option value="">Select scanned network</option></select>
-          <button id="scan_btn" class="btn" type="button" onclick="scanWifi()">
-            <span id="scan_spinner" class="spinner" hidden></span>
-            <span id="scan_label">Scan WiFi</span>
-          </button>
-        </div>
-        <div id="scan_status" class="muted scan-status">Tap Scan WiFi to list nearby networks.</div>
-        <input id="wifi_ssid" name="wifi_ssid" type="text" value="%WIFI_SSID%" placeholder="WiFi SSID" required />
-        <label for="wifi_password">Password</label>
-        <input id="wifi_password" name="wifi_password" type="password" value="%WIFI_PASSWORD%" placeholder="WiFi password" />
-      </div>
-
-      <div class="card">
-        <h2>MQTT Broker</h2>
-        <label for="mqtt_host">Host/IP</label>
-        <input id="mqtt_host" name="mqtt_host" type="text" value="%MQTT_HOST%" placeholder="broker.example.com" required />
-        <div class="row">
-          <div>
-            <label for="mqtt_port_plain">Port (plain)</label>
-            <input id="mqtt_port_plain" name="mqtt_port_plain" type="number" min="1" max="65535" value="%MQTT_PORT_PLAIN%" />
-          </div>
-          <div>
-            <label for="mqtt_port_tls">Port (TLS)</label>
-            <input id="mqtt_port_tls" name="mqtt_port_tls" type="number" min="1" max="65535" value="%MQTT_PORT_TLS%" />
-          </div>
-        </div>
-        <div class="check">
-          <input id="mqtt_use_tls" name="mqtt_use_tls" type="checkbox" %MQTT_TLS_CHECKED% />
-          <label for="mqtt_use_tls" style="margin:0">Use TLS/SSL</label>
-        </div>
-        <div class="row">
-          <div>
-            <label for="mqtt_username">Username</label>
-            <input id="mqtt_username" name="mqtt_username" type="text" value="%MQTT_USER%" />
-          </div>
-          <div>
-            <label for="mqtt_password">Password</label>
-            <input id="mqtt_password" name="mqtt_password" type="password" value="%MQTT_PASSWORD%" />
-          </div>
-        </div>
-        <label for="ca_file">CA certificate file (.crt/.pem)</label>
-        <input id="ca_file" type="file" accept=".crt,.pem,text/plain" onchange="loadCertFile(event)" />
-        <label for="mqtt_ca_cert">CA certificate content</label>
-        <textarea id="mqtt_ca_cert" name="mqtt_ca_cert" placeholder="-----BEGIN CERTIFICATE-----">%MQTT_CA_CERT%</textarea>
-        <div class="muted">Upload file or paste certificate. Used when TLS is enabled.</div>
-      </div>
-
-      <div class="card">
-        <h2>Topic Identity</h2>
-        <div class="row">
-          <div>
-            <label for="customer_id">Customer ID</label>
-            <input id="customer_id" name="customer_id" type="text" value="%CUSTOMER_ID%" required />
-          </div>
-          <div>
-            <label for="device_id">Device ID</label>
-            <input id="device_id" name="device_id" type="text" value="%DEVICE_ID%" required />
-          </div>
-        </div>
-        <div class="muted">Topic base: ppc/v1/c/&lt;customer_id&gt;/d/&lt;device_id&gt;</div>
-      </div>
-
-      <button class="btn" type="submit">Save and Reboot</button>
-    </form>
-  </div>
-
-<script>
-let scanBusy = false;
-
-function setScanUi(busy, text) {
-  const btn = document.getElementById('scan_btn');
-  const spinner = document.getElementById('scan_spinner');
-  const label = document.getElementById('scan_label');
-  const status = document.getElementById('scan_status');
-  if (btn) btn.disabled = busy;
-  if (spinner) spinner.hidden = !busy;
-  if (label) label.textContent = busy ? 'Scanning...' : 'Scan WiFi';
-  if (status && text) status.textContent = text;
-}
-
-async function scanWifi() {
-  if (scanBusy) return;
-  scanBusy = true;
-  setScanUi(true, 'Scanning nearby networks... this can take a few seconds.');
-  try {
-    const res = await fetch('/scan', { cache: 'no-store' });
-    if (!res.ok) throw new Error('scan_http_error');
-    const data = await res.json();
-    const list = document.getElementById('wifi_list');
-    list.innerHTML = '<option value="">Select scanned network</option>';
-    const ssids = (data.ssids || []);
-    ssids.forEach(ssid => {
-      const o = document.createElement('option');
-      o.value = ssid;
-      o.textContent = ssid;
-      list.appendChild(o);
-    });
-    setScanUi(false, ssids.length > 0 ? `Found ${ssids.length} network(s).` : 'No networks found. Move closer to AP and scan again.');
-  } catch (_) {
-    setScanUi(false, 'WiFi scan failed or timed out. Wait a moment and try again.');
-  } finally {
-    scanBusy = false;
-    const btn = document.getElementById('scan_btn');
-    const spinner = document.getElementById('scan_spinner');
-    const label = document.getElementById('scan_label');
-    if (btn) btn.disabled = false;
-    if (spinner) spinner.hidden = true;
-    if (label) label.textContent = 'Scan WiFi';
-  }
-}
-
-function selectWifi() {
-  const list = document.getElementById('wifi_list');
-  if (list.value) {
-    document.getElementById('wifi_ssid').value = list.value;
-  }
-}
-
-function loadCertFile(evt) {
-  const file = evt.target.files && evt.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    document.getElementById('mqtt_ca_cert').value = e.target.result || '';
-  };
-  reader.readAsText(file);
-}
-</script>
-</body>
-</html>
-)rawliteral";
-
-  String build_provision_page(const String &message = String()) {
-     String page = kProvisionPageTemplate;
-     String msg = message.isEmpty() ? String() : (String("<div class=\"msg\">") + html_escape(message) + "</div>");
-     page.replace("%MESSAGE%", msg);
-     page.replace("%WIFI_SSID%", html_escape(provisioning_cfg.wifi_ssid));
-     page.replace("%WIFI_PASSWORD%", html_escape(provisioning_cfg.wifi_password));
-     page.replace("%MQTT_HOST%", html_escape(provisioning_cfg.mqtt_host));
-     page.replace("%MQTT_PORT_PLAIN%", String(provisioning_cfg.mqtt_port_plain));
-     page.replace("%MQTT_PORT_TLS%", String(provisioning_cfg.mqtt_port_tls));
-     page.replace("%MQTT_TLS_CHECKED%", provisioning_cfg.mqtt_use_tls ? "checked" : "");
-     page.replace("%MQTT_USER%", html_escape(provisioning_cfg.mqtt_username));
-     page.replace("%MQTT_PASSWORD%", html_escape(provisioning_cfg.mqtt_password));
-     page.replace("%MQTT_CA_CERT%", html_escape(provisioning_cfg.mqtt_ca_cert));
-     page.replace("%CUSTOMER_ID%", html_escape(provisioning_cfg.customer_id));
-     page.replace("%DEVICE_ID%", html_escape(provisioning_cfg.device_id));
-     return page;
-
-  }
-
-  void handle_provision_root() {
-     provisioning_server.send(200, "text/html", build_provision_page());
-
-  }
-
-  void handle_provision_logo() {
-     provisioning_server.send_P(200, "image/png", reinterpret_cast<const char *>(kIsmartLogoPng), kIsmartLogoPngLen);
-
-  }
-  void handle_provision_scan() {
-     int count = WiFi.scanNetworks(false, false, false, 120);
-     JsonDocument doc;
-     JsonArray ssids = doc["ssids"].to<JsonArray>();
-     for (int i = 0; i < count; ++i) {
-       const String ssid = WiFi.SSID(i);
-       if (!ssid.isEmpty()) {
-         ssids.add(ssid);
-      }
-    }
-     WiFi.scanDelete();
-     String payload;
-     serializeJson(doc, payload);
-     provisioning_server.send(200, "application/json", payload);
-
-  }
-
-  void handle_provision_save() {
-     ProvisioningConfig candidate = provisioning_cfg;
-     candidate.wifi_ssid = trim_copy(provisioning_server.arg("wifi_ssid"));
-     candidate.wifi_password = provisioning_server.arg("wifi_password");
-     candidate.mqtt_host = trim_copy(provisioning_server.arg("mqtt_host"));
-     candidate.mqtt_username = provisioning_server.arg("mqtt_username");
-     candidate.mqtt_password = provisioning_server.arg("mqtt_password");
-     candidate.mqtt_ca_cert = provisioning_server.arg("mqtt_ca_cert");
-     candidate.customer_id = trim_copy(provisioning_server.arg("customer_id"));
-     candidate.device_id = trim_copy(provisioning_server.arg("device_id"));
-     candidate.mqtt_use_tls = provisioning_server.hasArg("mqtt_use_tls");
-
-     uint16_t parsed_port = 0;
-     if (parse_port_string(provisioning_server.arg("mqtt_port_plain"), parsed_port)) {
-       candidate.mqtt_port_plain = parsed_port;
-    }
-     if (parse_port_string(provisioning_server.arg("mqtt_port_tls"), parsed_port)) {
-       candidate.mqtt_port_tls = parsed_port;
-    }
-
-     candidate.mqtt_ca_cert.trim();
-     if (candidate.mqtt_ca_cert.length() > kMaxCaCertLength) {
-       provisioning_server.send(400, "text/plain", "certificate_too_large");
-       return;
-    }
-
-     if (candidate.device_id.isEmpty()) {
-       candidate.device_id = default_device_id();
-    }
-
-     provisioning_cfg = candidate;
-     if (!provisioning_config_valid()) {
-       provisioning_server.send(400, "text/plain", "missing_or_invalid_required_fields");
-       return;
-    }
-     if (!save_provisioning_settings()) {
-       provisioning_server.send(500, "text/plain", "persist_failed");
-       return;
-    }
-
-     provisioning_server.send(200, "text/html", build_provision_page("Saved. Rebooting device now."));
-     provisioning_restart_requested = true;
-
-  }
-
-  void handle_provision_not_found() {
-     provisioning_server.sendHeader("Location", String("http://") + WiFi.softAPIP().toString(), true);
-     provisioning_server.send(302, "text/plain", "");
-
-  }
-
-  void start_provisioning_portal() {
-     WiFi.disconnect(true, true);
-     delay(50);
-     WiFi.mode(WIFI_AP_STA);
-     WiFi.softAPConfig(kProvisionApIp, kProvisionApGateway, kProvisionApSubnet);
-
-     uint64_t chip = ESP.getEfuseMac();
-     char suffix[5];
-     snprintf(suffix, sizeof(suffix), "%04X", static_cast<unsigned>(chip & 0xFFFFU));
-     String ap_ssid = String(cfg::kProvisionApSsidPrefix) + "-" + suffix;
-     const char *ap_password = (strlen(cfg::kProvisionApPassword) >= 8) ? cfg::kProvisionApPassword : nullptr;
-     if (!WiFi.softAP(ap_ssid.c_str(), ap_password)) {
-       Serial.println("[PROVISION] Failed to start AP");
-       provisioning_restart_requested = true;
-       return;
-    }
-
-     provisioning_dns.start(kProvisionPortalDnsPort, "*", WiFi.softAPIP());
-     provisioning_server.on("/", HTTP_GET, handle_provision_root);
-     provisioning_server.on("/logo.png", HTTP_GET, handle_provision_logo);
-     provisioning_server.on("/scan", HTTP_GET, handle_provision_scan);
-     provisioning_server.on("/save", HTTP_POST, handle_provision_save);
-     provisioning_server.on("/generate_204", HTTP_GET, handle_provision_not_found);
-     provisioning_server.on("/fwlink", HTTP_GET, handle_provision_not_found);
-     provisioning_server.onNotFound(handle_provision_not_found);
-     provisioning_server.begin();
-
-     Serial.printf("[PROVISION] AP ready. SSID=%s IP=%s\n", ap_ssid.c_str(), WiFi.softAPIP().toString().c_str());
-
-  }
-
-  void run_provisioning_portal_until_configured() {
-     provisioning_restart_requested = false;
-     start_provisioning_portal();
-     while (!provisioning_restart_requested) {
-       provisioning_dns.processNextRequest();
-       provisioning_server.handleClient();
-       delay(2);
-    }
-     provisioning_server.stop();
-     provisioning_dns.stop();
-     delay(300);
-     ESP.restart();
-
-  }
   const ppc::RangingMode *ranging_mode_from_name(const String &name) {
      if (name.equalsIgnoreCase(ppc::Ranging::kShortest.name)) {
        return &ppc::Ranging::kShortest;
@@ -1746,9 +1199,9 @@ function loadCertFile(evt) {
   void publish_meta() {
      JsonDocument doc;
      doc["fw_version"] = kFwVersion;
-     doc["device_id"] = provisioning_cfg.device_id;
-     doc["customer_id"] = provisioning_cfg.customer_id;
-     doc["mqtt_tls"] = provisioning_cfg.mqtt_use_tls;
+     doc["device_id"] = cfg::kDeviceId;
+     doc["customer_id"] = cfg::kCustomerId;
+     doc["mqtt_tls"] = cfg::kMqttUseTls;
      doc["schema"] = "ppc/v1";
      doc["features"]["commands"] = true;
      doc["features"]["daily_totals"] = true;
@@ -1809,7 +1262,7 @@ function loadCertFile(evt) {
     
   }
   void setup_topics() {
-     base_topic = String("ppc/v1/c/") + provisioning_cfg.customer_id + "/d/" + provisioning_cfg.device_id;
+     base_topic = String("ppc/v1/c/") + cfg::kCustomerId + "/d/" + cfg::kDeviceId;
      topic_state = base_topic + "/state";
      topic_event = base_topic + "/event";
      topic_cmd = base_topic + "/cmd";
@@ -1823,19 +1276,15 @@ function loadCertFile(evt) {
        return;
       
     }
-     if (trim_copy(provisioning_cfg.wifi_ssid).isEmpty()) {
-       return;
-      
-    }
      const uint32_t now = millis();
      if ((now - last_wifi_reconnect_ms) < 5000) {
        return;
       
     }
      last_wifi_reconnect_ms = now;
-     Serial.printf("[WiFi] Connecting to %s\n", provisioning_cfg.wifi_ssid.c_str());
+     Serial.printf("[WiFi] Connecting to %s\n", cfg::kWifiSsid);
      WiFi.mode(WIFI_STA);
-     WiFi.begin(provisioning_cfg.wifi_ssid.c_str(), provisioning_cfg.wifi_password.c_str());
+     WiFi.begin(cfg::kWifiSsid, cfg::kWifiPassword);
     
   }
   bool apply_runtime_config_from_json(JsonObjectConst cfg_obj, String &error_message) {
@@ -2190,30 +1639,6 @@ function loadCertFile(evt) {
        return;
       
     }
-     if (cmd == "factory_reset") {
-       JsonVariantConst confirm_var = doc["confirm"];
-       if (confirm_var.isNull()) {
-         confirm_var = doc["value"];
-      }
-       bool confirmed = false;
-       if (!parse_bool(confirm_var, confirmed) && confirm_var.is<const char *>()) {
-         String token = confirm_var.as<const char *>();
-         token.toUpperCase();
-         confirmed = (token == "ERASE_NVS" || token == "FACTORY_RESET");
-      }
-       if (!confirmed) {
-         publish_ack(request_id, false, "factory_reset_confirmation_required");
-         return;
-      }
-       if (!clear_all_persisted_data()) {
-         publish_ack(request_id, false, "factory_reset_failed");
-         return;
-      }
-       publish_ack(request_id, true, "factory_reset_restarting");
-       delay(300);
-       ESP.restart();
-       return;
-    }
      if (cmd == "restart") {
        publish_ack(request_id, true, "restarting");
        delay(250);
@@ -2236,11 +1661,9 @@ function loadCertFile(evt) {
     }
      last_mqtt_reconnect_ms = now;
      uint64_t chip = ESP.getEfuseMac();
-     char client_id[96];
-     snprintf(client_id, sizeof(client_id), "%s-%04X", provisioning_cfg.device_id.c_str(), static_cast<unsigned>(chip & 0xFFFFU));
-     const char *mqtt_user = provisioning_cfg.mqtt_username.isEmpty() ? nullptr : provisioning_cfg.mqtt_username.c_str();
-     const char *mqtt_pass = provisioning_cfg.mqtt_password.isEmpty() ? nullptr : provisioning_cfg.mqtt_password.c_str();
-     bool connected = mqtt_client.connect(client_id, mqtt_user, mqtt_pass, topic_availability.c_str(), 1, true, "offline", true);
+     char client_id[80];
+     snprintf(client_id, sizeof(client_id), "%s-%04X", cfg::kDeviceId, static_cast<unsigned>(chip & 0xFFFFU));
+     bool connected = mqtt_client.connect(client_id, cfg::kMqttUsername, cfg::kMqttPassword, topic_availability.c_str(), 1, true, "offline", true);
      if (!connected) {
        Serial.printf("[MQTT] Connect failed rc=%d\n", mqtt_client.state());
        return;
@@ -2254,32 +1677,32 @@ function loadCertFile(evt) {
     
   }
   void setup_mqtt_transport() {
-     mqtt_client.setServer(provisioning_cfg.mqtt_host.c_str(), provisioning_cfg.mqtt_use_tls ? provisioning_cfg.mqtt_port_tls : provisioning_cfg.mqtt_port_plain);
+     mqtt_client.setServer(cfg::kMqttHost, cfg::kMqttUseTls ? cfg::kMqttPortTls : cfg::kMqttPortPlain);
      mqtt_client.setCallback(mqtt_callback);
      mqtt_client.setBufferSize(1536);
-     if (provisioning_cfg.mqtt_use_tls) {
-       if (!provisioning_cfg.mqtt_ca_cert.isEmpty()) {
-         tls_client.setCACert(provisioning_cfg.mqtt_ca_cert.c_str());
-         
+     if (cfg::kMqttUseTls) {
+       if (strlen(cfg::kMqttCaCert) > 0) {
+         tls_client.setCACert(cfg::kMqttCaCert);
+        
       }
        else {
          Serial.println("[MQTT] TLS enabled without CA cert. Falling back to insecure TLS for testing.");
          tls_client.setInsecure();
-         
+        
       }
        if (strlen(cfg::kMqttClientCert) > 0 && strlen(cfg::kMqttClientKey) > 0) {
          tls_client.setCertificate(cfg::kMqttClientCert);
          tls_client.setPrivateKey(cfg::kMqttClientKey);
-         
+        
       }
        mqtt_client.setClient(tls_client);
-       
+      
     }
      else {
        mqtt_client.setClient(plain_client);
-       
+      
     }
-     
+    
   }
   
 }
@@ -2288,14 +1711,6 @@ function loadCertFile(evt) {
 void setup() {
    Serial.begin(115200);
    delay(200);
-
-   load_provisioning_settings();
-   if (!provisioning_config_valid()) {
-     Serial.println("[PROVISION] Missing WiFi/MQTT settings. Starting setup AP.");
-     run_provisioning_portal_until_configured();
-     return;
-  }
-
    setup_topics();
    configTime(cfg::kGmtOffsetSec, cfg::kDstOffsetSec, cfg::kNtpServer1, cfg::kNtpServer2);
 
@@ -2314,7 +1729,7 @@ void setup() {
   }
    save_persisted_settings();
    Serial.println("[PPC] Setup complete");
-   
+  
 }
 void loop() {
    connect_wifi();
@@ -2345,38 +1760,6 @@ void loop() {
    delay(2);
   
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

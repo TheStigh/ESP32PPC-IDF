@@ -1,0 +1,10 @@
+﻿ M components/vl53l1x/VL53L1X_i2ccoms.cpp
+ M docs/standalone-mqtt-contract.md
+ M include/app_config.h
+ M platformio.ini
+ M src/main.cpp
+ M src/ppc_zone.cpp
+ M src/ppc_zone.h
+?? backups/
+?? boot0.bin
+?? putty.log

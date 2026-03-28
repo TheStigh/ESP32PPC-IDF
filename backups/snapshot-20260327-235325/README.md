@@ -9,16 +9,12 @@ This repository now also includes a standalone firmware entry point for Platform
 - `src/ppc_zone.*`
 - `src/vl53l1x_device.*`
 - `docs/standalone-mqtt-contract.md`
-- `docs/standalone-full-documentation.md`
 
 It uses MQTT as the primary interface with topic namespace:
 
 `ppc/v1/c/{customer_id}/d/{device_id}`
 
 Build and flash with PlatformIO from the project root.
-
-Full standalone documentation:
-[docs/standalone-full-documentation.md](docs/standalone-full-documentation.md)
 
 
 ## March 25: NOW Support ESP-IDF, including ESP32-C5 !

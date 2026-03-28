@@ -1,0 +1,330 @@
+=~=~=~=~=~=~=~=~=~=~=~= PuTTY log 2026.03.28 00:26:04 =~=~=~=~=~=~=~=~=~=~=~=
+E (1163) MSPI Timing: Failed to allocate dummy cacheline for PSR: Medium
+[Zone] Entry ROI calibrated {w:7 h:14 c:167}
+[Zone] Entry threshold idle=1536 min=0(0%) max=1305(85%)
+[Zone] Exit ROI calibrated {w:6 h:12 c:239}
+[Zone] Exit threshold idle=1577 min=0(0%) max=1340(85%)
+[Zone] Entry adaptive idle 1536 -> 1538
+[Zone] Entry adaptive idle 1538 -> 1540
+[Zone] Exit adaptive idle 1578 -> 1579
+[PPC][DBG] d0=1573 d1=1605 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=0 pres=0 dir=None
+[PPC][DBG] d0=1597 d1=1593 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=0 pres=0 dir=None
+[PPC][DBG] d0=1567 d1=1598 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=0 pres=0 dir=None
+[PPC][DBG] d0=1566 d1=1606 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=0 pres=0 dir=None
+[PPC][DBG] d0=1587 d1=1580 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=0 pres=0 dir=None
+[PPC][DBG] d0=1570 d1=1607 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=0 pres=0 dir=None
+[PPC][DBG] d0=1573 d1=1605 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=0 pres=0 dir=None
+[PPC][DBG] d0=1584 d1=1593 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=0 pres=0 dir=None
+[PPC][DBG] d0=1574 d1=1619 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=0 pres=0 dir=None
+[PPC][DBG] d0=1585 d1=1605 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=0 pres=0 dir=None
+[PPC][DBG] d0=1591 d1=1613 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=0 pres=0 dir=None
+[PPC][DBG] d0=1605 d1=1582 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=0 pres=0 dir=None
+[PPC][DBG] d0=1573 d1=1579 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=0 pres=0 dir=None
+[PPC][DBG] d0=1579 d1=1619 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=0 pres=0 dir=None
+[PPC][DBG] d0=1589 d1=1613 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=0 pres=0 dir=None
+[PPC][DBG] d0=1586 d1=1578 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=0 pres=0 dir=None
+[PPC][DBG] d0=1588 d1=1636 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=0 pres=0 dir=None
+[PPC][DBG] d0=1599 d1=1602 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=0 pres=0 dir=None
+[PPC][DBG] d0=1588 d1=1608 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=0 pres=0 dir=None
+[PPC][DBG] d0=1577 d1=1601 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=0 pres=0 dir=None
+[PPC][DBG] d0=1590 d1=1603 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=0 pres=0 dir=None
+[PPC][DBG] d0=1588 d1=1586 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=0 pres=0 dir=None
+[PPC][DBG] d0=1578 d1=1354 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=0 pres=0 dir=None
+[PPC][TRACE] state 1->3 left=1 right=1 first=1 last=1 both=1
+[PPC][DBG] d0=427 d1=718 th0=0-1309 th1=0-1342 occ0=1 occ1=1 cnt=0 pres=1 dir=None
+[PPC][TRACE] state 3->2 left=0 right=1 first=1 last=2 both=1
+[PPC][DBG] d0=1581 d1=1618 th0=0-1309 th1=0-1342 occ0=1 occ1=0 cnt=0 pres=1 dir=None
+[PPC][TRACE] state 2->0 left=0 right=0 first=1 last=2 both=1
+[PPC][TRACE] finalize reason=first_last first=1 last=2 both=1 peakL=318512 peakR=318636 bal=1129->-1018 now=318823 delta=-1
+[PPC][EVENT] Exit count=-1
+[PPC][DBG] d0=1581 d1=1630 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-1 pres=0 dir=Exit
+[PPC][DBG] d0=1585 d1=1611 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-1 pres=0 dir=Exit
+[PPC][DBG] d0=1577 d1=1601 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-1 pres=0 dir=Exit
+[PPC][DBG] d0=1582 d1=1605 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-1 pres=0 dir=Exit
+[PPC][DBG] d0=1565 d1=1609 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-1 pres=0 dir=Exit
+[PPC][DBG] d0=1589 d1=1571 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-1 pres=0 dir=Exit
+[PPC][DBG] d0=1574 d1=1610 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-1 pres=0 dir=Exit
+[PPC][DBG] d0=1579 d1=1606 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-1 pres=0 dir=Exit
+[PPC][DBG] d0=1569 d1=1593 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-1 pres=0 dir=Exit
+[PPC][DBG] d0=1571 d1=1602 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-1 pres=0 dir=Exit
+[PPC][DBG] d0=1587 d1=1613 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-1 pres=0 dir=Exit
+[PPC][DBG] d0=1578 d1=1605 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-1 pres=0 dir=Exit
+[PPC][DBG] d0=1584 d1=1599 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-1 pres=0 dir=Exit
+[PPC][DBG] d0=1579 d1=1597 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-1 pres=0 dir=Exit
+[PPC][DBG] d0=1576 d1=459 th0=0-1309 th1=0-1342 occ0=0 occ1=1 cnt=-1 pres=1 dir=Exit
+[PPC][TRACE] state 1->3 left=1 right=1 first=1 last=1 both=1
+[PPC][DBG] d0=363 d1=1579 th0=0-1309 th1=0-1342 occ0=1 occ1=1 cnt=-1 pres=1 dir=Exit
+[PPC][TRACE] state 3->2 left=0 right=1 first=1 last=2 both=1
+[PPC][TRACE] state 2->0 left=0 right=0 first=1 last=2 both=1
+[PPC][TRACE] finalize reason=first_last first=1 last=2 both=1 peakL=321644 peakR=321769 bal=1117->-1162 now=321955 delta=-1
+[PPC][EVENT] Exit count=-2
+[PPC][DBG] d0=1573 d1=1599 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-2 pres=0 dir=Exit
+[PPC][DBG] d0=1566 d1=1587 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-2 pres=0 dir=Exit
+[PPC][DBG] d0=1588 d1=1613 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-2 pres=0 dir=Exit
+[PPC][DBG] d0=1577 d1=1595 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-2 pres=0 dir=Exit
+[PPC][DBG] d0=1590 d1=1619 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-2 pres=0 dir=Exit
+[PPC][DBG] d0=1576 d1=1584 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-2 pres=0 dir=Exit
+[PPC][DBG] d0=1568 d1=1591 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-2 pres=0 dir=Exit
+[PPC][DBG] d0=1576 d1=1604 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-2 pres=0 dir=Exit
+[PPC][DBG] d0=1611 d1=1619 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-2 pres=0 dir=Exit
+[PPC][DBG] d0=1572 d1=1614 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-2 pres=0 dir=Exit
+[PPC][DBG] d0=1583 d1=1589 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-2 pres=0 dir=Exit
+[PPC][DBG] d0=1586 d1=1596 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-2 pres=0 dir=Exit
+[PPC][DBG] d0=1574 d1=1597 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-2 pres=0 dir=Exit
+[PPC][DBG] d0=1574 d1=1608 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-2 pres=0 dir=Exit
+[PPC][TRACE] state 1->3 left=1 right=1 first=1 last=1 both=1
+[PPC][DBG] d0=945 d1=359 th0=0-1309 th1=0-1342 occ0=1 occ1=1 cnt=-2 pres=1 dir=Exit
+[PPC][TRACE] state 3->2 left=0 right=1 first=1 last=2 both=1
+[PPC][DBG] d0=1374 d1=1610 th0=0-1309 th1=0-1342 occ0=1 occ1=0 cnt=-2 pres=1 dir=Exit
+[PPC][TRACE] state 2->0 left=0 right=0 first=1 last=2 both=1
+[PPC][TRACE] finalize reason=first_last first=1 last=2 both=1 peakL=324584 peakR=324647 bal=1190->-1224 now=324833 delta=-1
+[PPC][EVENT] Exit count=-3
+[PPC][DBG] d0=1574 d1=1631 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-3 pres=0 dir=Exit
+[PPC][DBG] d0=1601 d1=1600 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-3 pres=0 dir=Exit
+[PPC][DBG] d0=1586 d1=1625 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-3 pres=0 dir=Exit
+[PPC][DBG] d0=1581 d1=1590 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-3 pres=0 dir=Exit
+[PPC][DBG] d0=1578 d1=1605 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-3 pres=0 dir=Exit
+[PPC][DBG] d0=1573 d1=1603 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-3 pres=0 dir=Exit
+[PPC][DBG] d0=1588 d1=1600 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-3 pres=0 dir=Exit
+[PPC][DBG] d0=1578 d1=1597 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-3 pres=0 dir=Exit
+[PPC][DBG] d0=1591 d1=1616 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-3 pres=0 dir=Exit
+[PPC][DBG] d0=1590 d1=1607 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-3 pres=0 dir=Exit
+[PPC][DBG] d0=1573 d1=1584 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-3 pres=0 dir=Exit
+[PPC][DBG] d0=1575 d1=1614 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-3 pres=0 dir=Exit
+[PPC][DBG] d0=1580 d1=1626 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-3 pres=0 dir=Exit
+[PPC][DBG] d0=1565 d1=355 th0=0-1309 th1=0-1342 occ0=0 occ1=1 cnt=-3 pres=1 dir=Exit
+[PPC][TRACE] state 1->3 left=1 right=1 first=1 last=1 both=1
+[PPC][DBG] d0=359 d1=1572 th0=0-1309 th1=0-1342 occ0=1 occ1=1 cnt=-3 pres=1 dir=Exit
+[PPC][TRACE] state 3->2 left=0 right=1 first=1 last=2 both=1
+[PPC][TRACE] state 2->0 left=0 right=0 first=1 last=2 both=1
+[PPC][TRACE] finalize reason=first_last first=1 last=2 both=1 peakL=327459 peakR=327522 bal=433->-1060 now=327776 delta=-1
+[PPC][EVENT] Exit count=-4
+[PPC][DBG] d0=1582 d1=1620 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-4 pres=0 dir=Exit
+[PPC][DBG] d0=1583 d1=1591 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-4 pres=0 dir=Exit
+[PPC][DBG] d0=1606 d1=1611 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-4 pres=0 dir=Exit
+[PPC][DBG] d0=1583 d1=1607 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-4 pres=0 dir=Exit
+[PPC][DBG] d0=1574 d1=1597 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-4 pres=0 dir=Exit
+[PPC][DBG] d0=1569 d1=1601 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-4 pres=0 dir=Exit
+[PPC][DBG] d0=1580 d1=1603 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-4 pres=0 dir=Exit
+[PPC][DBG] d0=1590 d1=1604 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-4 pres=0 dir=Exit
+[PPC][DBG] d0=1581 d1=1585 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-4 pres=0 dir=Exit
+[PPC][DBG] d0=1582 d1=1621 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-4 pres=0 dir=Exit
+[PPC][DBG] d0=1581 d1=1622 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-4 pres=0 dir=Exit
+[PPC][DBG] d0=1574 d1=1612 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-4 pres=0 dir=Exit
+[PPC][DBG] d0=1573 d1=1591 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-4 pres=0 dir=Exit
+[PPC][DBG] d0=1317 d1=485 th0=0-1309 th1=0-1342 occ0=0 occ1=1 cnt=-4 pres=1 dir=Exit
+[PPC][TRACE] state 1->3 left=1 right=1 first=1 last=1 both=1
+[PPC][TRACE] state 3->2 left=0 right=1 first=1 last=2 both=1
+[PPC][DBG] d0=1470 d1=1588 th0=0-1309 th1=0-1342 occ0=1 occ1=0 cnt=-4 pres=1 dir=Exit
+[PPC][TRACE] state 2->0 left=0 right=0 first=1 last=2 both=1
+[PPC][TRACE] finalize reason=first_last first=1 last=2 both=1 peakL=330143 peakR=330267 bal=1093->-1093 now=330453 delta=-1
+[PPC][EVENT] Exit count=-5
+[PPC][DBG] d0=1592 d1=1593 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-5 pres=0 dir=Exit
+[PPC][DBG] d0=1579 d1=1611 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-5 pres=0 dir=Exit
+[PPC][DBG] d0=1583 d1=1603 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-5 pres=0 dir=Exit
+[PPC][DBG] d0=1589 d1=1595 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-5 pres=0 dir=Exit
+[PPC][DBG] d0=1581 d1=1605 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-5 pres=0 dir=Exit
+[PPC][DBG] d0=1580 d1=1608 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-5 pres=0 dir=Exit
+[PPC][DBG] d0=1578 d1=1615 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-5 pres=0 dir=Exit
+[PPC][DBG] d0=1589 d1=1591 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-5 pres=0 dir=Exit
+[PPC][DBG] d0=1581 d1=1575 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-5 pres=0 dir=Exit
+[PPC][DBG] d0=1577 d1=1588 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-5 pres=0 dir=Exit
+[PPC][DBG] d0=1560 d1=1598 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-5 pres=0 dir=Exit
+[PPC][DBG] d0=1569 d1=1611 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-5 pres=0 dir=Exit
+[PPC][DBG] d0=1575 d1=1613 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-5 pres=0 dir=Exit
+[PPC][DBG] d0=1573 d1=1588 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-5 pres=0 dir=Exit
+[PPC][DBG] d0=1595 d1=1595 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-5 pres=0 dir=Exit
+[PPC][DBG] d0=1598 d1=1597 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-5 pres=0 dir=Exit
+[PPC][DBG] d0=480 d1=1576 th0=0-1309 th1=0-1342 occ0=1 occ1=0 cnt=-5 pres=1 dir=Exit
+[PPC][TRACE] state 2->3 left=1 right=1 first=2 last=2 both=1
+[PPC][DBG] d0=1567 d1=980 th0=0-1309 th1=0-1342 occ0=1 occ1=1 cnt=-5 pres=1 dir=Exit
+[PPC][TRACE] state 3->1 left=1 right=0 first=2 last=1 both=1
+[PPC][TRACE] state 1->0 left=0 right=0 first=2 last=1 both=1
+[PPC][TRACE] finalize reason=first_last first=2 last=1 both=1 peakL=333701 peakR=333639 bal=-1096->587 now=333892 delta=1
+[PPC][EVENT] Entry count=-4
+[PPC][DBG] d0=1578 d1=1611 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-4 pres=0 dir=Entry
+[PPC][DBG] d0=1573 d1=1587 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-4 pres=0 dir=Entry
+[PPC][DBG] d0=1581 d1=1585 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-4 pres=0 dir=Entry
+[PPC][DBG] d0=1583 d1=1595 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-4 pres=0 dir=Entry
+[PPC][DBG] d0=1587 d1=1593 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-4 pres=0 dir=Entry
+[PPC][DBG] d0=1585 d1=1607 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-4 pres=0 dir=Entry
+[PPC][DBG] d0=1590 d1=1618 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-4 pres=0 dir=Entry
+[PPC][DBG] d0=1574 d1=1610 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-4 pres=0 dir=Entry
+[PPC][DBG] d0=1581 d1=1604 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-4 pres=0 dir=Entry
+[PPC][DBG] d0=1587 d1=1583 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-4 pres=0 dir=Entry
+[PPC][DBG] d0=1582 d1=1600 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-4 pres=0 dir=Entry
+[PPC][DBG] d0=1601 d1=1626 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-4 pres=0 dir=Entry
+[PPC][DBG] d0=1585 d1=1603 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-4 pres=0 dir=Entry
+[PPC][DBG] d0=967 d1=1591 th0=0-1309 th1=0-1342 occ0=1 occ1=0 cnt=-4 pres=1 dir=Entry
+[PPC][TRACE] state 2->3 left=1 right=1 first=2 last=2 both=1
+[PPC][DBG] d0=1535 d1=377 th0=0-1309 th1=0-1342 occ0=1 occ1=1 cnt=-4 pres=1 dir=Entry
+[PPC][TRACE] state 3->1 left=1 right=0 first=2 last=1 both=1
+[PPC][TRACE] state 1->0 left=0 right=0 first=2 last=1 both=1
+[PPC][TRACE] finalize reason=first_last first=2 last=1 both=1 peakL=336515 peakR=336452 bal=-624->1158 now=336705 delta=1
+[PPC][EVENT] Entry count=-3
+[PPC][DBG] d0=1576 d1=1593 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-3 pres=0 dir=Entry
+[PPC][DBG] d0=1573 d1=1617 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-3 pres=0 dir=Entry
+[PPC][DBG] d0=1590 d1=1612 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-3 pres=0 dir=Entry
+[PPC][DBG] d0=1578 d1=1610 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-3 pres=0 dir=Entry
+[PPC][DBG] d0=1593 d1=1594 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-3 pres=0 dir=Entry
+[PPC][DBG] d0=1557 d1=1598 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-3 pres=0 dir=Entry
+[PPC][DBG] d0=1565 d1=1594 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-3 pres=0 dir=Entry
+[PPC][DBG] d0=1595 d1=1594 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-3 pres=0 dir=Entry
+[PPC][DBG] d0=1575 d1=1621 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-3 pres=0 dir=Entry
+[PPC][DBG] d0=1570 d1=1607 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-3 pres=0 dir=Entry
+[PPC][DBG] d0=1592 d1=1571 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-3 pres=0 dir=Entry
+[PPC][DBG] d0=1577 d1=1614 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-3 pres=0 dir=Entry
+[PPC][DBG] d0=1581 d1=1601 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-3 pres=0 dir=Entry
+[PPC][DBG] d0=1570 d1=1586 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-3 pres=0 dir=Entry
+[PPC][DBG] d0=1463 d1=1589 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-3 pres=0 dir=Entry
+[PPC][TRACE] state 2->3 left=1 right=1 first=2 last=2 both=1
+[PPC][DBG] d0=328 d1=319 th0=0-1309 th1=0-1342 occ0=1 occ1=1 cnt=-3 pres=1 dir=Entry
+[PPC][TRACE] state 3->1 left=1 right=0 first=2 last=1 both=1
+[PPC][TRACE] state 1->0 left=0 right=0 first=2 last=1 both=1
+[PPC][TRACE] finalize reason=first_last first=2 last=1 both=1 peakL=339579 peakR=339516 bal=-1207->1154 now=339768 delta=1
+[PPC][EVENT] Entry count=-2
+[PPC][DBG] d0=1597 d1=1612 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-2 pres=0 dir=Entry
+[PPC][DBG] d0=1591 d1=1606 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-2 pres=0 dir=Entry
+[PPC][DBG] d0=1563 d1=1576 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-2 pres=0 dir=Entry
+[PPC][DBG] d0=1595 d1=1609 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-2 pres=0 dir=Entry
+[PPC][DBG] d0=1574 d1=1612 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-2 pres=0 dir=Entry
+[PPC][DBG] d0=1585 d1=1591 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-2 pres=0 dir=Entry
+[PPC][DBG] d0=1575 d1=1609 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-2 pres=0 dir=Entry
+[PPC][DBG] d0=1571 d1=1600 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-2 pres=0 dir=Entry
+[PPC][DBG] d0=1583 d1=1606 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-2 pres=0 dir=Entry
+[PPC][DBG] d0=1588 d1=1603 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-2 pres=0 dir=Entry
+[PPC][DBG] d0=1575 d1=1605 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-2 pres=0 dir=Entry
+[PPC][DBG] d0=1558 d1=1612 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-2 pres=0 dir=Entry
+[PPC][DBG] d0=1588 d1=1615 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-2 pres=0 dir=Entry
+[PPC][DBG] d0=1583 d1=1586 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-2 pres=0 dir=Entry
+[PPC][DBG] d0=312 d1=1529 th0=0-1309 th1=0-1342 occ0=1 occ1=0 cnt=-2 pres=1 dir=Entry
+[PPC][TRACE] state 2->3 left=1 right=1 first=2 last=2 both=1
+[PPC][DBG] d0=1584 d1=991 th0=0-1309 th1=0-1342 occ0=1 occ1=1 cnt=-2 pres=1 dir=Entry
+[PPC][TRACE] state 3->1 left=1 right=0 first=2 last=1 both=1
+[PPC][TRACE] state 1->0 left=0 right=0 first=2 last=1 both=1
+[PPC][TRACE] finalize reason=first_last first=2 last=1 both=1 peakL=342523 peakR=342459 bal=-1217->593 now=342709 delta=1
+[PPC][EVENT] Entry count=-1
+[PPC][DBG] d0=1573 d1=1590 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-1 pres=0 dir=Entry
+[PPC][DBG] d0=1584 d1=1617 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-1 pres=0 dir=Entry
+[PPC][DBG] d0=1575 d1=1614 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-1 pres=0 dir=Entry
+[PPC][DBG] d0=1585 d1=1600 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-1 pres=0 dir=Entry
+[PPC][DBG] d0=1599 d1=1563 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-1 pres=0 dir=Entry
+[PPC][DBG] d0=1573 d1=1584 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-1 pres=0 dir=Entry
+[PPC][DBG] d0=1577 d1=1572 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-1 pres=0 dir=Entry
+[PPC][DBG] d0=1596 d1=1605 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-1 pres=0 dir=Entry
+[PPC][DBG] d0=1568 d1=1608 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-1 pres=0 dir=Entry
+[PPC][DBG] d0=1557 d1=1610 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-1 pres=0 dir=Entry
+[PPC][DBG] d0=1570 d1=1621 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-1 pres=0 dir=Entry
+[PPC][DBG] d0=1577 d1=1589 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-1 pres=0 dir=Entry
+[PPC][DBG] d0=1580 d1=1610 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-1 pres=0 dir=Entry
+[PPC][DBG] d0=1569 d1=1562 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-1 pres=0 dir=Entry
+[PPC][DBG] d0=340 d1=351 th0=0-1309 th1=0-1342 occ0=1 occ1=1 cnt=-1 pres=1 dir=Entry
+[PPC][TRACE] state 3->1 left=1 right=0 first=1 last=1 both=1
+[PPC][TRACE] state 1->0 left=0 right=0 first=1 last=1 both=1
+[PPC][TRACE] finalize reason=balance_cross first=1 last=1 both=1 peakL=345404 peakR=345341 bal=-568->1157 now=345591 delta=1
+[PPC][EVENT] Entry count=0
+[PPC][DBG] d0=1584 d1=1607 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=0 pres=0 dir=Entry
+[PPC][DBG] d0=1580 d1=1591 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=0 pres=0 dir=Entry
+[PPC][DBG] d0=1575 d1=1616 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=0 pres=0 dir=Entry
+[PPC][DBG] d0=1582 d1=1591 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=0 pres=0 dir=Entry
+[PPC][DBG] d0=1585 d1=1593 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=0 pres=0 dir=Entry
+[PPC][DBG] d0=1587 d1=1593 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=0 pres=0 dir=Entry
+[PPC][DBG] d0=1581 d1=1594 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=0 pres=0 dir=Entry
+[PPC][DBG] d0=1583 d1=1600 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=0 pres=0 dir=Entry
+[PPC][DBG] d0=1568 d1=1607 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=0 pres=0 dir=Entry
+[PPC][DBG] d0=1601 d1=1610 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=0 pres=0 dir=Entry
+[PPC][DBG] d0=1593 d1=1583 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=0 pres=0 dir=Entry
+[PPC][DBG] d0=1599 d1=1605 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=0 pres=0 dir=Entry
+[PPC][DBG] d0=1584 d1=1605 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=0 pres=0 dir=Entry
+[PPC][DBG] d0=1600 d1=1597 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=0 pres=0 dir=Entry
+[PPC][TRACE] state 1->3 left=1 right=1 first=1 last=1 both=1
+[PPC][DBG] d0=417 d1=1102 th0=0-1309 th1=0-1342 occ0=1 occ1=1 cnt=0 pres=1 dir=Entry
+[PPC][TRACE] state 3->2 left=0 right=1 first=1 last=2 both=1
+[PPC][TRACE] state 2->0 left=0 right=0 first=1 last=2 both=1
+[PPC][TRACE] finalize reason=first_last first=1 last=2 both=1 peakL=348160 peakR=348222 bal=1172->-1131 now=348408 delta=-1
+[PPC][EVENT] Exit count=-1
+[PPC][DBG] d0=1569 d1=1621 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-1 pres=0 dir=Exit
+[PPC][DBG] d0=1578 d1=1591 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-1 pres=0 dir=Exit
+[PPC][DBG] d0=1563 d1=1636 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-1 pres=0 dir=Exit
+[PPC][DBG] d0=1586 d1=1616 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-1 pres=0 dir=Exit
+[PPC][DBG] d0=1598 d1=1602 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-1 pres=0 dir=Exit
+[PPC][DBG] d0=1581 d1=1603 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-1 pres=0 dir=Exit
+[PPC][DBG] d0=1571 d1=1614 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-1 pres=0 dir=Exit
+[PPC][DBG] d0=1570 d1=1606 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-1 pres=0 dir=Exit
+[PPC][DBG] d0=1599 d1=1580 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-1 pres=0 dir=Exit
+[PPC][DBG] d0=1576 d1=1605 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-1 pres=0 dir=Exit
+[PPC][DBG] d0=1592 d1=1599 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-1 pres=0 dir=Exit
+[PPC][DBG] d0=359 d1=353 th0=0-1309 th1=0-1342 occ0=1 occ1=1 cnt=-1 pres=1 dir=Exit
+[PPC][TRACE] state 3->0 left=0 right=0 first=0 last=0 both=1
+[PPC][TRACE] finalize reason=none first=0 last=0 both=1 peakL=350475 peakR=350475 bal=-125->6 now=350599 delta=0
+[PPC][DBG] d0=1576 d1=1599 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-1 pres=0 dir=Exit
+[PPC][DBG] d0=1582 d1=1623 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-1 pres=0 dir=Exit
+[PPC][DBG] d0=1576 d1=1612 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-1 pres=0 dir=Exit
+[PPC][DBG] d0=1584 d1=1615 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-1 pres=0 dir=Exit
+[PPC][DBG] d0=1586 d1=1584 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-1 pres=0 dir=Exit
+[PPC][DBG] d0=1587 d1=1619 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-1 pres=0 dir=Exit
+[PPC][DBG] d0=1578 d1=1595 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-1 pres=0 dir=Exit
+[PPC][DBG] d0=1589 d1=1613 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-1 pres=0 dir=Exit
+[PPC][DBG] d0=1571 d1=1611 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-1 pres=0 dir=Exit
+[PPC][DBG] d0=1563 d1=1605 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-1 pres=0 dir=Exit
+[PPC][DBG] d0=1585 d1=1596 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-1 pres=0 dir=Exit
+[PPC][DBG] d0=1585 d1=1577 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-1 pres=0 dir=Exit
+[PPC][DBG] d0=1583 d1=1592 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-1 pres=0 dir=Exit
+[PPC][DBG] d0=1591 d1=1588 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-1 pres=0 dir=Exit
+[PPC][DBG] d0=1577 d1=1587 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-1 pres=0 dir=Exit
+[PPC][DBG] d0=1567 d1=1596 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-1 pres=0 dir=Exit
+[PPC][DBG] d0=1553 d1=1615 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-1 pres=0 dir=Exit
+[PPC][DBG] d0=1582 d1=1609 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-1 pres=0 dir=Exit
+[PPC][DBG] d0=1579 d1=1584 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-1 pres=0 dir=Exit
+[PPC][DBG] d0=1585 d1=1576 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-1 pres=0 dir=Exit
+[PPC][DBG] d0=1591 d1=1622 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-1 pres=0 dir=Exit
+[PPC][DBG] d0=1580 d1=1594 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-1 pres=0 dir=Exit
+[PPC][DBG] d0=1580 d1=1567 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-1 pres=0 dir=Exit
+[PPC][DBG] d0=1583 d1=1618 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-1 pres=0 dir=Exit
+[PPC][DBG] d0=1595 d1=1597 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-1 pres=0 dir=Exit
+[PPC][DBG] d0=1594 d1=1584 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-1 pres=0 dir=Exit
+[PPC][DBG] d0=1573 d1=1594 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-1 pres=0 dir=Exit
+[PPC][DBG] d0=1576 d1=1585 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=-1 pres=0 dir=Exit
+[PPC][DBG] d0=301 d1=1171 th0=0-1309 th1=0-1342 occ0=1 occ1=1 cnt=-1 pres=1 dir=Exit
+[PPC][TRACE] state 3->1 left=1 right=0 first=1 last=1 both=1
+[PPC][DBG] d0=1567 d1=1581 th0=0-1309 th1=0-1342 occ0=0 occ1=1 cnt=-1 pres=1 dir=Exit
+[PPC][TRACE] state 1->0 left=0 right=0 first=1 last=1 both=1
+[PPC][TRACE] finalize reason=balance_cross first=1 last=1 both=1 peakL=355970 peakR=355970 bal=-870->978 now=356161 delta=1
+[PPC][EVENT] Entry count=0
+[PPC][DBG] d0=1563 d1=1597 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=0 pres=0 dir=Entry
+[PPC][DBG] d0=1582 d1=1593 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=0 pres=0 dir=Entry
+[PPC][DBG] d0=1589 d1=1615 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=0 pres=0 dir=Entry
+[PPC][DBG] d0=1584 d1=1575 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=0 pres=0 dir=Entry
+[PPC][DBG] d0=1576 d1=1603 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=0 pres=0 dir=Entry
+[PPC][DBG] d0=1573 d1=1605 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=0 pres=0 dir=Entry
+[PPC][DBG] d0=1578 d1=1617 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=0 pres=0 dir=Entry
+[PPC][DBG] d0=1575 d1=1607 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=0 pres=0 dir=Entry
+[PPC][DBG] d0=1565 d1=1611 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=0 pres=0 dir=Entry
+[PPC][DBG] d0=1590 d1=1597 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=0 pres=0 dir=Entry
+[PPC][DBG] d0=1584 d1=1640 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=0 pres=0 dir=Entry
+[PPC][DBG] d0=1591 d1=1596 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=0 pres=0 dir=Entry
+[PPC][DBG] d0=1577 d1=1621 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=0 pres=0 dir=Entry
+[PPC][DBG] d0=1582 d1=1615 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=0 pres=0 dir=Entry
+[PPC][DBG] d0=1586 d1=1617 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=0 pres=0 dir=Entry
+[PPC][DBG] d0=1587 d1=1622 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=0 pres=0 dir=Entry
+[PPC][DBG] d0=1595 d1=1601 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=0 pres=0 dir=Entry
+[PPC][DBG] d0=1573 d1=1633 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=0 pres=0 dir=Entry
+[PPC][DBG] d0=1566 d1=1594 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=0 pres=0 dir=Entry
+[PPC][DBG] d0=1571 d1=1614 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=0 pres=0 dir=Entry
+[PPC][DBG] d0=1575 d1=1612 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=0 pres=0 dir=Entry
+[PPC][DBG] d0=1604 d1=1613 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=0 pres=0 dir=Entry
+[PPC][DBG] d0=1578 d1=1615 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=0 pres=0 dir=Entry
+[PPC][DBG] d0=1580 d1=1598 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=0 pres=0 dir=Entry
+[PPC][DBG] d0=1576 d1=1573 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=0 pres=0 dir=Entry
+[PPC][DBG] d0=1591 d1=1614 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=0 pres=0 dir=Entry
+[PPC][DBG] d0=1580 d1=1625 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=0 pres=0 dir=Entry
+[PPC][DBG] d0=1565 d1=1605 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=0 pres=0 dir=Entry
+[PPC][DBG] d0=1571 d1=1593 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=0 pres=0 dir=Entry
+[PPC][DBG] d0=1584 d1=1596 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=0 pres=0 dir=Entry
+[PPC][DBG] d0=1575 d1=1613 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=0 pres=0 dir=Entry
+[PPC][DBG] d0=1585 d1=1598 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=0 pres=0 dir=Entry
+[PPC][DBG] d0=1574 d1=1611 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=0 pres=0 dir=Entry
+[PPC][DBG] d0=1594 d1=1594 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=0 pres=0 dir=Entry
+[PPC][DBG] d0=1586 d1=1601 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=0 pres=0 dir=Entry
+[PPC][DBG] d0=1581 d1=1614 th0=0-1309 th1=0-1342 occ0=0 occ1=0 cnt=0 pres=0 dir=Entry
+[
