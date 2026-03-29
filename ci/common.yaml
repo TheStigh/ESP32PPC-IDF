@@ -1,0 +1,83 @@
+substitutions:
+  devicename: ci
+  friendly_name: $devicename
+
+external_components:
+  refresh: always
+  source: ../components
+
+esphome:
+  name: $devicename
+
+vl53l1x:
+  calibration:
+    ranging: auto
+
+esp32ppc:
+  id: esp32ppc_platform
+  sampling: 2
+  roi: { height: 16, width: 6 }
+  detection_thresholds:
+    max: 85%
+  # Test new v1.6.0 features
+  path_tracking_timeout: 3s
+  adaptive_threshold:
+    enabled: true
+    update_interval: 60s
+    alpha: 0.05
+  zones:
+    invert: false
+
+button:
+  - platform: restart
+    name: $friendly_name Restart
+    entity_category: config
+  - platform: template
+    name: $friendly_name Recalibrate
+    on_press:
+      - lambda: id(esp32ppc_platform)->recalibration();
+    entity_category: config
+
+number:
+  - platform: esp32ppc
+    people_counter:
+      name: $friendly_name people counter
+
+binary_sensor:
+  - platform: esp32ppc
+    presence_sensor:
+      name: $friendly_name presence
+
+sensor:
+  - platform: esp32ppc
+    id: esp32ppc_sensors
+    distance_entry:
+      name: $friendly_name distance zone 0
+    distance_exit:
+      name: $friendly_name distance zone 1
+    max_threshold_entry:
+      name: $friendly_name max zone 0
+    max_threshold_exit:
+      name: $friendly_name max zone 1
+    min_threshold_entry:
+      name: $friendly_name min zone 0
+    min_threshold_exit:
+      name: $friendly_name min zone 1
+    roi_height_entry:
+      name: $friendly_name ROI height zone 0
+    roi_width_entry:
+      name: $friendly_name ROI width zone 0
+    roi_height_exit:
+      name: $friendly_name ROI height zone 1
+    roi_width_exit:
+      name: $friendly_name ROI width zone 1
+    sensor_status:
+      name: Sensor Status
+
+text_sensor:
+  - platform: esp32ppc
+    version:
+      name: $friendly_name version
+  - platform: esp32ppc
+    entry_exit_event:
+      name: $friendly_name last direction

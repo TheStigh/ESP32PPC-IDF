@@ -1,0 +1,209 @@
+#pragma once
+#include <math.h>
+
+#include "esphome/components/binary_sensor/binary_sensor.h"
+#include "esphome/components/sensor/sensor.h"
+#include "esphome/components/switch/switch.h"
+#include "esphome/components/text_sensor/text_sensor.h"
+#include "esphome/components/time/real_time_clock.h"
+#include "esphome/core/application.h"
+#include "esphome/core/component.h"
+#include "esphome/core/hal.h"
+#include "esphome/core/log.h"
+#include "../vl53l1x/vl53l1x.h"
+#include "orientation.h"
+#include "zone.h"
+
+using namespace esphome::vl53l1x;
+using TofSensor = esphome::vl53l1x::VL53L1X;
+
+namespace esphome {
+namespace esp32ppc {
+#define NOBODY 0
+#define SOMEONE 1
+#define VERSION "1.6.0"
+static const char *const TAG = "ESP32ppc";
+static const char *const SETUP = "Setup";
+static const char *const CALIBRATION = "Sensor Calibration";
+
+/*
+Use the VL53L1X_SetTimingBudget function to set the TB in milliseconds. The TB
+values available are [15, 20, 33, 50, 100, 200, 500]. This function must be
+called after VL53L1X_SetDistanceMode. Note: 15 ms only works with Short distance
+mode. 100 ms is the default value. The TB can be adjusted to improve the
+standard deviation (SD) of the measurement. Increasing the TB, decreases the SD
+but increases the power consumption.
+*/
+
+static int delay_between_measurements = 0;
+static int time_budget_in_ms = 0;
+
+/*
+Parameters which define the time between two different measurements in various
+modes (https://www.st.com/resource/en/datasheet/vl53l1x.pdf) The timing budget
+and inter-measurement period should not be called when the sensor is ranging.
+The user has to stop the ranging, change these parameters, and restart ranging
+The minimum inter-measurement period must be longer than the timing budget + 4
+ms.
+// Lowest possible is 15ms with the ULD API
+(https://www.st.com/resource/en/user_manual/um2510-a-guide-to-using-the-vl53l1x-ultra-lite-driver-stmicroelectronics.pdf)
+Valid values: [15,20,33,50,100,200,500]
+*/
+static int time_budget_in_ms_short = 15;  // max range: 1.3m
+static int time_budget_in_ms_medium = 33;
+static int time_budget_in_ms_medium_long = 50;
+static int time_budget_in_ms_long = 100;
+static int time_budget_in_ms_max = 200;  // max range: 4m
+
+class Esp32ppc;
+
+class CounterClampSwitch : public switch_::Switch {
+ public:
+  explicit CounterClampSwitch(Esp32ppc *parent) : parent_(parent) {}
+
+ protected:
+  void write_state(bool state) override;
+  Esp32ppc *parent_;
+};
+
+class Esp32ppc : public PollingComponent {
+ public:
+  void setup() override;
+  void update() override;
+  void loop() override;
+  void dump_config() override;
+  /** Esp32ppc uses data from sensors */
+  float get_setup_priority() const override { return setup_priority::PROCESSOR; };
+
+  TofSensor *get_tof_sensor() { return this->distanceSensor; }
+  void set_tof_sensor(TofSensor *sensor) { this->distanceSensor = sensor; }
+  void set_invert_direction(bool dir) { invert_direction_ = dir; }
+  void set_orientation(Orientation val) { orientation_ = val; }
+  void set_sampling_size(uint8_t size) {
+    samples = size;
+    entry->set_max_samples(size);
+    exit->set_max_samples(size);
+  }
+  void set_distance_entry(sensor::Sensor *distance_entry_) { distance_entry = distance_entry_; }
+  void set_distance_exit(sensor::Sensor *distance_exit_) { distance_exit = distance_exit_; }
+  void set_people_counter(number::Number *counter) { this->people_counter = counter; }
+  void set_max_threshold_entry_sensor(sensor::Sensor *max_threshold_entry_sensor_) {
+    max_threshold_entry_sensor = max_threshold_entry_sensor_;
+  }
+  void set_max_threshold_exit_sensor(sensor::Sensor *max_threshold_exit_sensor_) {
+    max_threshold_exit_sensor = max_threshold_exit_sensor_;
+  }
+  void set_min_threshold_entry_sensor(sensor::Sensor *min_threshold_entry_sensor_) {
+    min_threshold_entry_sensor = min_threshold_entry_sensor_;
+  }
+  void set_min_threshold_exit_sensor(sensor::Sensor *min_threshold_exit_sensor_) {
+    min_threshold_exit_sensor = min_threshold_exit_sensor_;
+  }
+  void set_entry_roi_height_sensor(sensor::Sensor *roi_height_sensor_) { entry_roi_height_sensor = roi_height_sensor_; }
+  void set_entry_roi_width_sensor(sensor::Sensor *roi_width_sensor_) { entry_roi_width_sensor = roi_width_sensor_; }
+  void set_exit_roi_height_sensor(sensor::Sensor *roi_height_sensor_) { exit_roi_height_sensor = roi_height_sensor_; }
+  void set_exit_roi_width_sensor(sensor::Sensor *roi_width_sensor_) { exit_roi_width_sensor = roi_width_sensor_; }
+  void set_sensor_status_sensor(sensor::Sensor *status_sensor_) { status_sensor = status_sensor_; }
+  void set_presence_sensor_binary_sensor(binary_sensor::BinarySensor *presence_sensor_) {
+    presence_sensor = presence_sensor_;
+  }
+  void set_version_text_sensor(text_sensor::TextSensor *version_sensor_) { version_sensor = version_sensor_; }
+  void set_entry_exit_event_text_sensor(text_sensor::TextSensor *entry_exit_event_sensor_) {
+    entry_exit_event_sensor = entry_exit_event_sensor_;
+  }
+  void set_total_entry_today_sensor(sensor::Sensor *total_entry_today_sensor_) {
+    total_entry_today_sensor = total_entry_today_sensor_;
+  }
+  void set_total_exit_today_sensor(sensor::Sensor *total_exit_today_sensor_) {
+    total_exit_today_sensor = total_exit_today_sensor_;
+  }
+  void set_time(time::RealTimeClock *time_comp) { time_ = time_comp; }
+  void set_clamped_switch(CounterClampSwitch *clamped_switch) { clamped_switch_ = clamped_switch; }
+  void set_clamped_mode(bool clamped_mode);
+  bool get_clamped_mode() const { return clamped_mode_; }
+  void recalibration();
+  Zone *entry = new Zone(0);
+  Zone *exit = new Zone(1);
+
+  // Configuration setters for new features
+  void set_path_tracking_timeout(uint32_t timeout_ms) { path_tracking_timeout_ms_ = timeout_ms; }
+  void set_adaptive_threshold_enabled(bool enabled) { adaptive_threshold_enabled_ = enabled; }
+  void set_adaptive_threshold_update_interval(uint32_t interval_ms) { adaptive_threshold_interval_ms_ = interval_ms; }
+  void set_adaptive_threshold_alpha(float alpha) { adaptive_threshold_alpha_ = alpha; }
+
+ protected:
+  TofSensor *distanceSensor;
+  Zone *current_zone = entry;
+  sensor::Sensor *distance_entry;
+  sensor::Sensor *distance_exit;
+  number::Number *people_counter;
+  sensor::Sensor *max_threshold_entry_sensor;
+  sensor::Sensor *max_threshold_exit_sensor;
+  sensor::Sensor *min_threshold_entry_sensor;
+  sensor::Sensor *min_threshold_exit_sensor;
+  sensor::Sensor *exit_roi_height_sensor;
+  sensor::Sensor *exit_roi_width_sensor;
+  sensor::Sensor *entry_roi_height_sensor;
+  sensor::Sensor *entry_roi_width_sensor;
+  sensor::Sensor *status_sensor;
+  binary_sensor::BinarySensor *presence_sensor;
+  text_sensor::TextSensor *version_sensor;
+  text_sensor::TextSensor *entry_exit_event_sensor;
+  sensor::Sensor *total_entry_today_sensor{nullptr};
+  sensor::Sensor *total_exit_today_sensor{nullptr};
+  time::RealTimeClock *time_{nullptr};
+  CounterClampSwitch *clamped_switch_{nullptr};
+
+  VL53L1_Error last_sensor_status = VL53L1_ERROR_NONE;
+  VL53L1_Error sensor_status = VL53L1_ERROR_NONE;
+  void path_tracking(Zone *zone);
+  bool handle_sensor_status();
+  void calibrateDistance();
+  void calibrate_zones();
+  const RangingMode *determine_raning_mode(uint16_t average_entry_zone_distance, uint16_t average_exit_zone_distance);
+  void publish_sensor_configuration(Zone *entry, Zone *exit, bool isMax);
+  void updateCounter(int delta);
+  Orientation orientation_{Parallel};
+  uint8_t samples{2};
+  bool invert_direction_{false};
+  int number_attempts = 20;  // TO DO: make this configurable
+  int short_distance_threshold = 1300;
+  int medium_distance_threshold = 2000;
+  int medium_long_distance_threshold = 2700;
+  int long_distance_threshold = 3400;
+
+  // Path tracking state (moved from static variables for better encapsulation)
+  int path_track_[4] = {0, 0, 0, 0};
+  int path_track_filling_size_ = 1;
+  int left_previous_status_ = NOBODY;
+  int right_previous_status_ = NOBODY;
+  uint32_t last_state_change_time_ = 0;
+
+  // Timeout configuration: resets path tracking if no state change within timeout
+  // Prevents stuck states when someone enters halfway and turns back
+  uint32_t path_tracking_timeout_ms_ = 3000;  // Default 3 seconds
+
+  // Adaptive threshold configuration: continuously adjusts idle baseline
+  // to handle environmental drift (temperature, lighting changes)
+  bool adaptive_threshold_enabled_ = true;
+  uint32_t adaptive_threshold_interval_ms_ = 60000;  // Update every 60 seconds
+  float adaptive_threshold_alpha_ = 0.05f;  // EMA smoothing factor (0.0-1.0)
+  uint32_t last_adaptive_update_time_ = 0;
+  uint32_t zones_empty_since_ = 0;
+  bool zones_were_occupied_ = false;
+
+  bool clamped_mode_{false};
+  uint32_t total_entry_today_{0};
+  uint32_t total_exit_today_{0};
+  int last_reset_day_of_year_{-1};
+  bool warned_missing_time_{false};
+
+  void resetPathTracking();
+  void updateAdaptiveThresholds();
+  void maybe_reset_daily_totals_();
+  void publish_daily_totals_();
+};
+
+}  // namespace esp32ppc
+}  // namespace esphome
+

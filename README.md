@@ -1,22 +1,5 @@
 # ESP32ppc
 
-## Standalone PlatformIO/Arduino (WIP)
-
-This repository now also includes a standalone firmware entry point for PlatformIO (Arduino framework):
-
-- `platformio.ini`
-- `src/main.cpp`
-- `src/ppc_zone.*`
-- `src/vl53l1x_device.*`
-- `docs/standalone-mqtt-contract.md`
-
-It uses MQTT as the primary interface with topic namespace:
-
-`ppc/v1/c/{customer_id}/d/{device_id}`
-
-Build and flash with PlatformIO from the project root.
-
-
 ## March 25: NOW Support ESP-IDF, including ESP32-C5 !
 
 [![GitHub release](https://img.shields.io/github/v/tag/TheStigh/ESP32PPC-IDF?style=flat-square)](https://GitHub.com/TheStigh/ESP32PPC-IDF/releases/)

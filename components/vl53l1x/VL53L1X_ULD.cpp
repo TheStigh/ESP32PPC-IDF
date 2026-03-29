@@ -1,16 +1,7 @@
+
 #include "VL53L1X_ULD.h"
-#if defined(USE_ARDUINO)
-#include <Arduino.h>
-#define VL53L1X_MILLIS() millis()
-#define VL53L1X_DELAY(ms) delay(ms)
-#elif defined(USE_ESP_IDF)
 #include "esphome/core/hal.h"
-#define VL53L1X_MILLIS() esphome::millis()
-#define VL53L1X_DELAY(ms) esphome::delay(ms)
-#else
-#define VL53L1X_MILLIS() millis()
-#define VL53L1X_DELAY(ms) delay(ms)
-#endif
+
 /**
  * @brief This function instantiates the class object
  */
@@ -38,10 +29,10 @@ VL53L1_Error VL53L1X_ULD::Init() {
  */
 VL53L1_Error VL53L1X_ULD::Begin(uint8_t i2cAddress) {
     uint8_t isBooted = 0;
-    uint32_t startTime = VL53L1X_MILLIS();
-    while (!(isBooted & 1) && (VL53L1X_MILLIS() < (startTime + 100))) {
+    uint32_t startTime = esphome::millis();
+    while (!(isBooted & 1) && (esphome::millis() < (startTime + 100))) {
         GetBootState(&isBooted);
-        VL53L1X_DELAY(5);
+        esphome::delay(5);
     }
 
     // Check if the device has booted. If not a timeout has occured
@@ -49,11 +40,11 @@ VL53L1_Error VL53L1X_ULD::Begin(uint8_t i2cAddress) {
         // Begin was initialized with another I2C address. This could mean the init would fail as the sensor was already initialized before.
         // The I2C address only changes when calling SetI2CAddress or by being powered down.
         SetI2CAddress(i2cAddress);
-        VL53L1X_DELAY(100);
-        startTime = VL53L1X_MILLIS();
-        while (!(isBooted & 1) && (VL53L1X_MILLIS() < (startTime + 100))) {
+        esphome::delay(100);
+        startTime = esphome::millis();
+        while (!(isBooted & 1) && (esphome::millis() < (startTime + 100))) {
             GetBootState(&isBooted);
-            VL53L1X_DELAY(5);
+            esphome::delay(5);
         }
         if (!(isBooted & 1)) {
             return VL53L1_ERROR_TIME_OUT;
@@ -485,7 +476,3 @@ VL53L1_Error VL53L1X_ULD::CalibrateOffset(uint16_t targetDistanceInMm, int16_t *
 VL53L1_Error VL53L1X_ULD::CalibrateXTalk(uint16_t targetDistanceInMm, uint16_t *foundXtalk) {
     return VL53L1X_CalibrateXtalk(_i2c_address, targetDistanceInMm, foundXtalk);
 }
-
-
-
-
