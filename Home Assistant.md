@@ -31,12 +31,12 @@ automation:
         at: "00:00:00"
     condition:
       - condition: state
-        entity_id: binary_sensor.roode32_presence
+        entity_id: binary_sensor.esp32ppc_presence
         state: "off"
     action:
       - service: number.set_value
         target:
-          entity_id: number.roode32_people_counter
+          entity_id: number.esp32ppc_people_counter
         data:
           value: 0
 ```
@@ -50,14 +50,14 @@ automation:
   - alias: "Notify on frequent ESP32ppc timeouts"
     trigger:
       - platform: state
-        entity_id: text_sensor.roode32_last_direction
+        entity_id: sensor.esp32ppc_last_direction
         to: "Timeout"
     action:
       - service: counter.increment
         target:
-          entity_id: counter.roode_timeout_count
+          entity_id: counter.esp32ppc_timeout_count
       - condition: numeric_state
-        entity_id: counter.roode_timeout_count
+        entity_id: counter.esp32ppc_timeout_count
         above: 10
       - service: notify.mobile_app
         data:
@@ -71,7 +71,7 @@ If you prefer using an input_number slider to adjust the count:
 
 ```yaml
 input_number:
-  roode_people_count:
+  esp32ppc_people_count:
     name: "Room Occupancy"
     min: 0
     max: 20
@@ -82,29 +82,29 @@ automation:
   - alias: "Sync ESP32ppc counter to slider"
     trigger:
       - platform: state
-        entity_id: number.roode32_people_counter
+        entity_id: number.esp32ppc_people_counter
     action:
       - service: input_number.set_value
         target:
-          entity_id: input_number.roode_people_count
+          entity_id: input_number.esp32ppc_people_count
         data:
-          value: "{{ states('number.roode32_people_counter') | int }}"
+          value: "{{ states('number.esp32ppc_people_counter') | int }}"
 
   - alias: "Sync slider to ESP32ppc counter"
     trigger:
       - platform: state
-        entity_id: input_number.roode_people_count
+        entity_id: input_number.esp32ppc_people_count
     condition:
       - condition: template
         value_template: >
-          {{ states('input_number.roode_people_count') | int !=
-             states('number.roode32_people_counter') | int }}
+          {{ states('input_number.esp32ppc_people_count') | int !=
+             states('number.esp32ppc_people_counter') | int }}
     action:
       - service: number.set_value
         target:
-          entity_id: number.roode32_people_counter
+          entity_id: number.esp32ppc_people_counter
         data:
-          value: "{{ states('input_number.roode_people_count') | int }}"
+          value: "{{ states('input_number.esp32ppc_people_count') | int }}"
 ```
 
 ### Turn Off Lights When Room Empty
@@ -114,7 +114,7 @@ automation:
   - alias: "Turn off lights when room empty"
     trigger:
       - platform: numeric_state
-        entity_id: number.roode32_people_counter
+        entity_id: number.esp32ppc_people_counter
         below: 1
         for:
           minutes: 5
@@ -133,7 +133,7 @@ automation:
   - alias: "Alert on significant threshold change"
     trigger:
       - platform: state
-        entity_id: sensor.roode32_max_zone_0
+        entity_id: sensor.esp32ppc_max_zone_0
     condition:
       - condition: template
         value_template: >
@@ -153,7 +153,7 @@ ESP32ppc exposes a recalibration service that can be called from Home Assistant:
 
 ```yaml
 # In Developer Tools > Services
-service: esphome.roode32_recalibrate
+service: esphome.esp32ppc_recalibrate
 ```
 
 Or in an automation:
@@ -166,12 +166,12 @@ automation:
         at: "03:00:00"
     condition:
       - condition: state
-        entity_id: binary_sensor.roode32_presence
+        entity_id: binary_sensor.esp32ppc_presence
         state: "off"
         for:
           minutes: 10
     action:
-      - service: esphome.roode32_recalibrate
+      - service: esphome.esp32ppc_recalibrate
 ```
 
 ## Dashboard Cards
@@ -181,11 +181,11 @@ automation:
 ```yaml
 type: entities
 entities:
-  - entity: number.roode32_people_counter
+  - entity: number.esp32ppc_people_counter
     name: People in Room
-  - entity: binary_sensor.roode32_presence
+  - entity: binary_sensor.esp32ppc_presence
     name: Motion Detected
-  - entity: text_sensor.roode32_last_direction
+  - entity: sensor.esp32ppc_last_direction
     name: Last Event
 ```
 
@@ -195,20 +195,20 @@ entities:
 type: entities
 title: ESP32ppc Sensor Details
 entities:
-  - entity: number.roode32_people_counter
-  - entity: text_sensor.roode32_last_direction
+  - entity: number.esp32ppc_people_counter
+  - entity: sensor.esp32ppc_last_direction
   - type: section
     label: Zone 0 (Entry)
-  - entity: sensor.roode32_distance_zone_0
-  - entity: sensor.roode32_max_zone_0
-  - entity: sensor.roode32_min_zone_0
+  - entity: sensor.esp32ppc_distance_zone_0
+  - entity: sensor.esp32ppc_max_zone_0
+  - entity: sensor.esp32ppc_min_zone_0
   - type: section
     label: Zone 1 (Exit)
-  - entity: sensor.roode32_distance_zone_1
-  - entity: sensor.roode32_max_zone_1
-  - entity: sensor.roode32_min_zone_1
+  - entity: sensor.esp32ppc_distance_zone_1
+  - entity: sensor.esp32ppc_max_zone_1
+  - entity: sensor.esp32ppc_min_zone_1
   - type: section
     label: System
-  - entity: text_sensor.roode32_version
-  - entity: sensor.roode32_sensor_status
+  - entity: sensor.esp32ppc_version
+  - entity: sensor.esp32ppc_sensor_status
 ```
